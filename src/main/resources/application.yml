@@ -1,0 +1,91 @@
+logging:
+   config: classpath:logback.xml
+
+spring:
+  datasource:
+    druid:
+      url: jdbc:oracle:thin:@192.168.51.29:1521/bhm
+      username: itsm
+      password: itsm
+
+      type: com.alibaba.druid.pool.DruidDataSource
+      initialSize: 5
+      minIdle: 8
+      maxActive: 20
+      maxWait: 60000
+      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      timeBetweenEvictionRunsMillis: 60000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      minEvictableIdleTimeMillis: 160000
+      # 配置一个连接在池中最大生存的时间，单位是毫秒
+      maxEvictableIdleTimeMillis: 230000
+      # 配置检测连接是否有效
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      keepAlive: true
+      filter:
+        commons-log:
+          data-source-log-enabled: true
+          statement-log-enabled: true
+          statement-executable-sql-log-enable: true
+  thymeleaf:
+    servlet:
+      content-type: text/html
+    cache: false
+    mode: HTML
+    encoding: UTF-8
+    prefix: classpath:/templates/
+    suffix: .html
+  redis:
+    host: 192.168.51.29
+    port: 6379
+    password: jcca@123
+    jedis:
+      pool:
+        max-wait: 10000
+        min-idle: 20
+        max-idle: 50
+        max-active: 500
+    timeout: 10000
+    database: 8
+server:
+  port: 9993
+  compression:
+    min-response-size: 256
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,application/x-javascript
+
+mybatis-plus:
+  type-aliases-package: com.jcca.*.dao
+  mapper-locations: classpath:/mapper/*.xml
+  # 驼峰命名
+  configuration:
+    map-underscore-to-camel-case: true
+    # 打印sql
+  log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+#itsm地址
+pushUrl: 192.168.51.29:5501
+
+
+# 动环配置
+tcp:
+  # 是否开启动环服务 0不开启，1开启
+  open: 1
+  # 接口服务器IP
+  host: 192.168.1.28
+  # 接口服务器端口
+  port: 1234
+  # 接口服务器端口2
+  port2: 1235
+  # 数据过期时间，即数据发送周期 单位 秒
+  receive-timeout: 5
+  # 超时检查周期，即数据过期时间的2倍加1
+  cron: "*/11 * * * * ?"
+  # 测试用服务端是否开启,0不开启,1开启，生产环境必须设置为 0
+  server: 0
+  # 基数数据文件
+  baseFile: D:\home\data\
+
