@@ -5,7 +5,7 @@ import com.jcca.common.LogUtil;
 import com.jcca.common.RedisService;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
-import com.jcca.supervision.data.DataNodes;
+import com.jcca.supervision.data.Nodes;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -49,7 +49,7 @@ public class SetNodesAckService implements ResponseHandleAdapter {
     @Override
     public Object decode(ByteBuf contentBuf) {
         DataBaseInfo baseInfo = new DataBaseInfo();
-        List<DataNodes> nodeList = new ArrayList<>();
+        List<Nodes> nodeList = new ArrayList<>();
         int nodeCount = contentBuf.readInt();// 节点个数
         if (nodeCount == -1) {
             logger.info(LogUtil.buildLog("节点个数过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
@@ -62,7 +62,7 @@ public class SetNodesAckService implements ResponseHandleAdapter {
         for (int i = 0; i < nodeCount; i++) {
             long nodeId = contentBuf.readUnsignedInt();
             long parentNodeId = contentBuf.readUnsignedInt();
-            DataNodes node = new DataNodes();
+            Nodes node = new Nodes();
             node.setId(Long.toString(nodeId));
             node.setParentId(Long.toString(parentNodeId));
             nodeList.add(node);
@@ -80,9 +80,7 @@ public class SetNodesAckService implements ResponseHandleAdapter {
     public void handle(Object obj) {
         logger.info(LogUtil.buildLog("开始处理节点数据：", JSON.toJSONString(obj)));
         DataBaseInfo baseInfo = (DataBaseInfo) obj;
-        List<DataNodes> nodeList = baseInfo.getDataNodesList();
-        String key = DataConst.DH_NODE;
-        DataConst.NODE_SET.add(key);
-        redisService.set(key, JSON.toJSONString(nodeList));
+        List<Nodes> nodeList = baseInfo.getDataNodesList();
+        redisService.set(DataConst.DH_NODE, JSON.toJSONString(nodeList));
     }
 }

@@ -1,5 +1,6 @@
 package com.jcca.supervision.data;
 
+import com.jcca.supervision.entity.Alarm;
 import lombok.Data;
 
 import java.util.Date;
@@ -23,13 +24,16 @@ public class DataBaseInfo {
     private long num;
 
     //节点数据
-    private List<DataNodes> dataNodesList;
+    private List<Nodes> dataNodesList;
 
-    //节点属性
-    private List<String> nodeData;
+    //属性
+    private List<PropertyData> propertyList;
 
     //告警数据
-    private List<AlarmData> alarmDataList;
+    private List<Alarm> alarmDataList;
+
+    //监测值
+    private List<PropertyValue> propertyValueList;
 
 
 }

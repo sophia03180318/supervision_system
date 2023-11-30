@@ -1,21 +1,25 @@
 package com.jcca.supervision.handle.decoder;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.jcca.common.LogUtil;
-import com.jcca.common.config.TcpConfig;
+import com.jcca.common.RedisService;
 import com.jcca.supervision.constant.DataConst;
-import com.jcca.supervision.data.AlarmData;
 import com.jcca.supervision.data.DataBaseInfo;
+import com.jcca.supervision.entity.Alarm;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
+import com.jcca.supervision.service.AlarmService;
+import com.jcca.util.MyIdUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @description: 服务器主动发送告警
@@ -25,7 +29,10 @@ import java.util.ArrayList;
 @Service
 public class SendAlarmService implements ResponseHandleAdapter {
     @Resource
-    private TcpConfig tcpConfig;
+    private RedisService redisService;
+
+    @Resource
+    private AlarmService alarmService;
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -49,7 +56,7 @@ public class SendAlarmService implements ResponseHandleAdapter {
     @Override
     public Object decode(ByteBuf contentBuf) {
         DataBaseInfo baseInfo = new DataBaseInfo();
-        ArrayList<AlarmData> alarmDataList = new ArrayList<AlarmData>();
+        ArrayList<Alarm> alarmDataList = new ArrayList<Alarm>();
         int cnt = contentBuf.readInt();// 告警数量
         if (cnt == -1) {
             logger.info(LogUtil.buildLog("告警信息过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
@@ -64,15 +71,15 @@ public class SendAlarmService implements ResponseHandleAdapter {
             if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
                 continue;
             }
-            String desc = contentBuf.readCharSequence(160, CharsetUtil.US_ASCII).toString().trim(); //告警描述
-            AlarmData alarmData = new AlarmData();
-            alarmData.setDataId(String.valueOf(dataId));
+            String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
+            Alarm alarmData = new Alarm();
+            alarmData.setPropertyId(String.valueOf(dataId));
             alarmData.setLevel(level);
             alarmData.setDesc(desc);
             alarmDataList.add(alarmData);
         }
         baseInfo.setAlarmDataList(alarmDataList);
-        return alarmDataList;
+        return baseInfo;
     }
 
     /**
@@ -82,7 +89,17 @@ public class SendAlarmService implements ResponseHandleAdapter {
      */
     @Override
     public void handle(Object obj) {
-        logger.info(LogUtil.buildLog("登录业务处理：", JSON.toJSONString(obj)));
+        logger.info(LogUtil.buildLog("告警信息处理：", JSON.toJSONString(obj)));
+        DataBaseInfo baseInfo = (DataBaseInfo) obj;
+        if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
+            List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
+            for (Alarm alarm : alarmDataList) {
+                alarm.setId(MyIdUtil.getIncId());
+                alarm.setCreateTime(baseInfo.getTime());
+                alarmService.save(alarm);
+            }
+        }
+
     }
 
 }

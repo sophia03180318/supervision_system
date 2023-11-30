@@ -1,9 +1,6 @@
 package com.jcca.supervision.constant;
 
-import cn.hutool.core.collection.ConcurrentHashSet;
-
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -48,8 +45,10 @@ public interface DataConst {
     int LEVEL2 = 2; // 读写权限
 
 
-    String DH_NODE = "dhNode";//节点信息Key  里面存储所有节点信息
-    Set<String> NODE_SET = new ConcurrentHashSet<>(512);
+    String DH_NODE = "dhNode";//节点信息Key  里面存储所有节点信息 <Nodes>
+
+    String DH_PROERTY = "dhProperty";//属性信息Key  里面存储所有属性信息 <PropertyData>
+
 
 
     // 心跳间隔15秒
