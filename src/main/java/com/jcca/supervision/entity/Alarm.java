@@ -32,6 +32,29 @@ public class Alarm {
     @TableField("ALARM_DESC")
     private String desc;
 
+    //告警序号
+    private String alarmId;
+
+    //设备?名称
+    private String name;
+
+    //发生时间
+    private Date occurrenceTime;
+
+    //ID描述
+    private String idDesc;
+
+    //告警级别描述
+    private String levelStr;
+
+    //告警号
+    private  String alarmNumber;
+
+    //告警标志
+    private String alarmFlag;
+
+    //告警文本
+    private String alarmInfo;
 
     @TableField("CREATE_TIME")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

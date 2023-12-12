@@ -28,7 +28,7 @@ import java.util.List;
  * @create: 2023/11/27 10:58
  **/
 @Service
-public class SendAlarmService implements ResponseHandleAdapter {
+public class SetActiveAlarmService implements ResponseHandleAdapter {
     @Resource
     private RedisService redisService;
 
@@ -45,7 +45,7 @@ public class SendAlarmService implements ResponseHandleAdapter {
      */
     @Override
     public Integer getCode() {
-        return DataConst.SEND_ALARM;
+        return DataConst.SET_ACTIVE_ALARM;
     }
 
     /**
@@ -60,11 +60,9 @@ public class SendAlarmService implements ResponseHandleAdapter {
         ArrayList<Alarm> alarmDataList = new ArrayList<Alarm>();
         int cnt = contentBuf.readInt();// 告警数量
         if (cnt == -1) {
-            logger.info(LogUtil.buildLog("告警信息过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
+            logger.info(LogUtil.buildLog("当前告警信息过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
         }
-        if (cnt == -2) {
-            logger.info(LogUtil.buildLog("无指定ID，获取告警失败", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
-        }
+
         for (int i = 0; i < cnt; i++) {
             long dataId = contentBuf.readUnsignedInt();//数据ID
             int level = contentBuf.readInt();//状态
@@ -102,5 +100,9 @@ public class SendAlarmService implements ResponseHandleAdapter {
                 alarmService.save(alarmInfo);
             }
         }
+
     }
+
+
+
 }

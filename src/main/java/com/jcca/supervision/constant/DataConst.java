@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2023/11/23 15:36
  */
 public interface DataConst {
+
     // 存放临时数据
     Map<String, Object> TEMP_MAP = new ConcurrentHashMap<>();
 
@@ -17,23 +18,23 @@ public interface DataConst {
 
     //消息类型代码
     int HEART_BEAT = 0x04B1; // 心跳消息
-    int LOGIN = 0x65; // 登录
-    int LOGIN_ACK = 0x66; // 登录响应
-    int LOGOUT = 0x67; // 登出
-    int LOGOUT_ACK = 0x68; // 登出响应
-    int GET_NODES = 0xC9; // 请求节点以下的整个树的ID号
-    int SET_NODES = 0xCA; // 树请求响应
-    int GET_SUBSTRUCT = 0xCB; // 请求节点下一层的ID号
-    int SET_SUBSTRUCT = 0xCC; // 子层请求响应
-    int GET_PROPERTY = 0x012D; // 请求数据属性
-    int SET_PROPERTY = 0x012E; // 请求属性响应
-    int SET_DYN_ACCESS_MODE = 0x0191; // 请求实时数据方式设置
-    int DYN_ACCESS_MODE_ACK = 0x0192; // 实时数据响应
-    int SET_ALARM_MODE = 0x01F5; // 请求报警数据方式设置
-    int ALARM_MODE_ACK = 0x01F6; // 报警方式设置响应
-    int SEND_ALARM = 0x01F7; // 实时报警发送
-    int GET_ACTIVE_ALARM = 0x01F8; // 请求所有当前报警
-    int SET_ACTIVE_ALARM = 0x01F9; // 请求所有当前告警响应
+    int LOGIN = 0x65; // 登录      101
+    int LOGIN_ACK = 0x66; // 登录响应   102
+    int LOGOUT = 0x67; // 登出    103
+    int LOGOUT_ACK = 0x68; // 登出响应  104
+    int GET_NODES = 0xC9; // 请求节点以下的整个树的ID号     201
+    int SET_NODES = 0xCA; // 树请求响应     202
+    int GET_SUBSTRUCT = 0xCB; // 请求节点下一层的ID号    203
+    int SET_SUBSTRUCT = 0xCC; // 子层请求响应           204
+    int GET_PROPERTY = 0x012D; // 请求数据属性       301
+    int SET_PROPERTY = 0x012E; // 请求属性响应        302
+    int SET_DYN_ACCESS_MODE = 0x0191; // 请求实时数据方式设置  401
+    int DYN_ACCESS_MODE_ACK = 0x0192; // 实时数据响应     402
+    int SET_ALARM_MODE = 0x01F5; // 请求报警数据方式设置     501
+    int ALARM_MODE_ACK = 0x01F6; // 报警方式设置响应         502
+    int SEND_ALARM = 0x01F7; // 实时报警发送                 503
+    int GET_ACTIVE_ALARM = 0x01F8; // 请求所有当前报警        504
+    int SET_ACTIVE_ALARM = 0x01F9; // 请求所有当前告警响应     505
 
     String USER_NAME = "ITSM";   //用户名
     String PASSWORD = "PASSWORD"; //口令
@@ -45,18 +46,15 @@ public interface DataConst {
     int LEVEL2 = 2; // 读写权限
 
 
+    //Redis
+    String DH_NODE_ID = "dhNodeId";//节点信息Key  里面存储当前询问的父节点
     String DH_NODE = "dhNode";//节点信息Key  里面存储所有节点信息 <Nodes>
-
-    String DH_PROERTY = "dhProperty";//属性信息Key  里面存储所有属性信息 <PropertyData>
-
+    String DH_PROERTY = "dhProperty";//属性信息Key  里面存储属性信息 <PropertyData>
 
 
     // 心跳间隔15秒
     Long HEART_PERIOD_15 = 15L; // 心跳间隔15秒
     String MSG_HEART_BEAT = "04b1"; // 心跳内容
-
-    String DATA_HEAD = "efef"; // 消息头
-    String DATA_TAIL = "fdfd"; // 消息尾
 
 
     // netty通道key
@@ -66,10 +64,6 @@ public interface DataConst {
 
     String NETTY_CHANNEL_FLAG2 = "NettyChannelFlag2"; // 手动启动关闭用
     String NETTY_TCP_CHANNEL2 = "NettyTCPChannel2"; // 使用中的通道
-
-
-
-
 
 
     //EnumType 监控数据种类
@@ -123,7 +117,7 @@ public interface DataConst {
 
 
     //EnumResult    设置结果
-    int FAILURE =0;    //失败
-    int SUCCESS =1;    //成功
+    int FAILURE = 0;    //失败
+    int SUCCESS = 1;    //成功
 
 }
