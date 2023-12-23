@@ -24,6 +24,9 @@ public class Station {
     @TableField("STATION_ID")
     private String stationId;
 
+    @TableField("ROOM_ID")
+    private String roomId; //ITSM对应的机房ID
+
     @TableField("PARENT_ID")
     private String parentID;
 

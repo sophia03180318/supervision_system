@@ -6,8 +6,10 @@ import com.jcca.common.LogUtil;
 import com.jcca.common.RedisService;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
-import com.jcca.supervision.data.Nodes;
+import com.jcca.supervision.data.NodesData;
+import com.jcca.supervision.entity.Nodes;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
+import com.jcca.supervision.service.NodesService;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author sophia
@@ -29,7 +32,8 @@ public class SetSubstructService implements ResponseHandleAdapter {
 
     @Resource
     private RedisService redisService;
-
+    @Resource
+    private NodesService nodesService;
 
     /**
      * 根据程序处理代码和返回信息对应
@@ -50,7 +54,7 @@ public class SetSubstructService implements ResponseHandleAdapter {
     @Override
     public Object decode(ByteBuf contentBuf) {
         DataBaseInfo baseInfo = new DataBaseInfo();
-        List<Nodes> nodeList = new ArrayList<>();
+        List<NodesData> nodeList = new ArrayList<>();
         int nodeCount = contentBuf.readInt();// 节点个数
         if (nodeCount == -1) {
             logger.info(LogUtil.buildLog("节点个数过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
@@ -67,7 +71,7 @@ public class SetSubstructService implements ResponseHandleAdapter {
         }
         for (int i = 0; i < nodeCount; i++) {
             long nodeId = contentBuf.readUnsignedInt();
-            Nodes node = new Nodes();
+            NodesData node = new NodesData();
             node.setId(Long.toString(nodeId));
             node.setParentId(parentId);
             nodeList.add(node);
@@ -85,7 +89,13 @@ public class SetSubstructService implements ResponseHandleAdapter {
     public void handle(Object obj) {
         logger.info(LogUtil.buildLog("开始处理节点数据：", JSON.toJSONString(obj)));
         DataBaseInfo baseInfo = (DataBaseInfo) obj;
-        List<Nodes> nodeList = baseInfo.getDataNodesList();
-     //   redisService.set(DataConst.DH_NODE_ID, JSON.toJSONString(nodeList));
+        List<NodesData> nodeList = baseInfo.getDataNodesList();
+        for (NodesData nodesData : nodeList) {
+            Nodes nodes = new Nodes();
+            nodes.setId(nodesData.getId());
+            nodes.setParentId(nodesData.getParentId());
+            nodesService.saveOrUpdate(nodes);
+        }
+        redisService.set(DataConst.DH_NODE_ID_LIST,nodeList.stream().map(NodesData::getId).collect(Collectors.toList()));
     }
 }

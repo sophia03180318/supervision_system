@@ -10,6 +10,7 @@ import com.jcca.supervision.entity.Alarm;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import com.jcca.supervision.handle.decoder.utils.decodeUtil;
 import com.jcca.supervision.service.AlarmService;
+import com.jcca.supervision.service.PropertyService;
 import com.jcca.util.MyIdUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @description: 服务器主动发送告警
+ * @description: 当前告警
  * @author: sophia
  * @create: 2023/11/27 10:58
  **/
@@ -31,7 +32,8 @@ import java.util.List;
 public class SetActiveAlarmService implements ResponseHandleAdapter {
     @Resource
     private RedisService redisService;
-
+    @Resource
+    private PropertyService propertyService;
     @Resource
     private AlarmService alarmService;
 
@@ -94,15 +96,18 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
         if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
             for (Alarm alarm : alarmDataList) {
+                Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
+                if (ObjectUtil.isNull(cacheData)) {
+                    logger.error("未获取到此监测点位的设备ID：" + DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
+                    continue;
+                }
                 alarm.setId(MyIdUtil.getIncId());
                 alarm.setCreateTime(baseInfo.getTime());
+                alarm.setDeviceId((String) cacheData);
                 Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
                 alarmService.save(alarmInfo);
             }
         }
 
     }
-
-
-
 }

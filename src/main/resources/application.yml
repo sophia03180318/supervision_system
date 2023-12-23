@@ -75,7 +75,7 @@ tcp:
   # 是否开启动环服务 0不开启，1开启
   open: 1
   # 接口服务器IP
-  host: 192.168.1.28
+  host: 192.168.20.179
   # 接口服务器端口
   port: 1234
   # 接口服务器端口2
@@ -88,4 +88,14 @@ tcp:
   server: 0
   # 基数数据文件
   baseFile: D:\home\data\
+
+  #ITSM 机房一号ID
+  roomId1: "4-110"
+  #动环 机房一号ID
+  station1: "1074790400"
+
+  #ITSM 机房二号ID
+  roomId2: "4-120"
+  #动环 机房二号ID
+  station2: "1074790401"
 

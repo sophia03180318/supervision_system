@@ -8,9 +8,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.Charset;
+import java.util.Random;
 
 /**
  * @author sophia
@@ -23,16 +25,22 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, BaseDataFrame dataFrame, ByteBuf out) throws Exception {
-
+        Random random = new Random();
         if (dataFrame instanceof LoginDataFrame) {
             out.writeByte(LoginDataFrame.LEN);
-            //out.writeByte("序号");
-            out.writeCharSequence(LoginDataFrame.getUserName(), CharsetUtil.US_ASCII);
-            out.writeCharSequence(LoginDataFrame.getPassword(),CharsetUtil.US_ASCII);
+            out.writeByte(random.nextInt());
+            out.writeByte(LoginDataFrame.DATA_TYPE);
+            out.writeCharSequence(LoginDataFrame.getUserName(), Charset.forName("GBK"));
+            out.writeCharSequence(LoginDataFrame.getPassword(), Charset.forName("GBK"));
             LoginDataFrame login = (LoginDataFrame) dataFrame;
-            encodeLogin(login, out);
+            encode(login, out);
 
-        } else if (dataFrame instanceof LoginDataFrame) {
+        } else if (dataFrame instanceof HeartbeatFrame) {
+            out.writeByte(HeartbeatFrame.LEN);
+            out.writeByte(random.nextInt());
+            out.writeByte(HeartbeatFrame.DATA_TYPE);
+            HeartbeatFrame heart = (HeartbeatFrame) dataFrame;
+            encode(heart, out);
 
         } else if (dataFrame instanceof HeartbeatFrame) {
 
@@ -41,7 +49,18 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
         }
     }
 
-    private void encodeLogin(LoginDataFrame frame, ByteBuf out) {
+
+    /**
+     * 心跳
+     */
+    private void encode(HeartbeatFrame frame, ByteBuf out) {
+
+    }
+
+    /**
+     * 登录
+     */
+    private void encode(LoginDataFrame frame, ByteBuf out) {
 
     }
 

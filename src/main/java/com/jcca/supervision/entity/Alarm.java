@@ -32,6 +32,10 @@ public class Alarm {
     @TableField("ALARM_DESC")
     private String desc;
 
+    //设备ID
+    @TableField("DEVICE_ID")
+    private String deviceId;
+
     //告警序号
     private String alarmId;
 

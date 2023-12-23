@@ -3,6 +3,7 @@ package com.jcca.supervision.data.frame;
 import com.jcca.supervision.constant.DataConst;
 
 import java.io.Serializable;
+import java.util.Random;
 
 /**
  * @description: 登录报文
@@ -21,7 +22,7 @@ public class LoginDataFrame extends BaseDataFrame implements Serializable {
 
     private LoginDataFrame() {
         this.setLen(LEN);
-        this.setNum(1);
+        this.setNum(new Random().nextInt());
         this.setType(DATA_TYPE);
     }
     /**

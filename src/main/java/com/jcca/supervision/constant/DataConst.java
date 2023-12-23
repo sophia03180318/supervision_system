@@ -47,9 +47,12 @@ public interface DataConst {
 
 
     //Redis
-    String DH_NODE_ID = "dhNodeId";//节点信息Key  里面存储当前询问的父节点
-    String DH_NODE = "dhNode";//节点信息Key  里面存储所有节点信息 <Nodes>
+    String DH_NODE_ID = "dhNodeId";//里面存储当前询问父节点的ID  可手动更新      String
+    String DH_NODE_ID_LIST = "dhNodeIdList";//里面存储当前询问父节点的子ID列表 List<String>
+
+    String DH_NODE = "dhNode";//节点信息Key  里面存储所有节点信息 List<Nodes>
     String DH_PROERTY = "dhProperty";//属性信息Key  里面存储属性信息 <PropertyData>
+    String DH_PROERTY_PARENT = "dhPropertyParent";//属性信息Key  里面存储属性所属的设备ID parentId
 
 
     // 心跳间隔15秒

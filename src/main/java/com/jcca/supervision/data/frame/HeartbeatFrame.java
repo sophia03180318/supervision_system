@@ -4,6 +4,7 @@ import com.jcca.supervision.constant.DataConst;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Random;
 
 /**
  * @author sophia
@@ -20,7 +21,7 @@ public class HeartbeatFrame extends BaseDataFrame implements Serializable {
 
     private HeartbeatFrame() {
         this.setLen(LEN);
-        this.setNum(1);
+        this.setNum(new Random().nextInt());
         this.setType(DATA_TYPE);
 
     }

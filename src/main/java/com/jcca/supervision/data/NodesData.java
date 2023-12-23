@@ -8,7 +8,7 @@ import lombok.Data;
  * @create: 2023/11/22 16:21
  **/
 @Data
-public class Nodes {
+public class NodesData {
     private String Id;
     private String parentId;
 }

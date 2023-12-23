@@ -8,6 +8,7 @@ import com.jcca.common.constant.BrokerConst;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
 import com.jcca.supervision.data.frame.HeartbeatFrame;
+import com.jcca.supervision.data.frame.LoginDataFrame;
 import com.jcca.supervision.handle.TcpResponseHandler;
 import com.jcca.util.SpringUtil;
 import io.netty.channel.Channel;
@@ -37,6 +38,7 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
     /**
      * 链接成功
      * 心跳处理
+     *
      * @param ctx
      */
     @Override
@@ -44,6 +46,7 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
         nettyTCPClient.resetCount();
         logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "TCP连接成功", ctx.channel().id().toString()));
         sendHeartbeat(ctx);
+        sendLogin(ctx);
     }
 
     private void sendHeartbeat(ChannelHandlerContext ctx) {
@@ -55,6 +58,14 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
 
         }, 0L, DataConst.HEART_PERIOD_15, TimeUnit.SECONDS);// 启动就开始发送心跳，间隔15秒
     }
+
+    private void sendLogin(ChannelHandlerContext ctx) {
+        Channel channel = ctx.channel();
+        if (channel.isActive()) {
+            ctx.writeAndFlush(LoginDataFrame.newInstance());
+        }
+    }
+
 
     /**
      * 接收消息统一处理

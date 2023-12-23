@@ -24,7 +24,7 @@ public class DataBaseInfo {
     private long num;
 
     //节点数据
-    private List<Nodes> dataNodesList;
+    private List<NodesData> dataNodesList;
 
     //属性
     private List<PropertyData> propertyList;

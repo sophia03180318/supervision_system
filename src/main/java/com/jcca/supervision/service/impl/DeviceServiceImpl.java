@@ -6,6 +6,8 @@ import com.jcca.supervision.entity.Device;
 import com.jcca.supervision.service.DeviceService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+
 /**
  * @description:
  * @author: sophia
@@ -13,4 +15,11 @@ import org.springframework.stereotype.Service;
  **/
 @Service
 public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> implements DeviceService {
+    @Resource
+    private DeviceMapper deviceMapper;
+
+    @Override
+    public void removeAll() {
+        deviceMapper.removeAll();
+    }
 }

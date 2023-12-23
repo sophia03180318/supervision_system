@@ -9,4 +9,8 @@ import com.jcca.supervision.entity.Device;
  * @create: 2023/11/30 14:00
  **/
 public interface DeviceService extends IService<Device> {
+    /**
+     * 清空设备数据
+     * */
+    void removeAll();
 }

@@ -31,5 +31,15 @@ public class TcpConfig {
     @Value("${tcp.server}")
     private int tcpServerTest;
 
+    //itsm 对接动环机房关联关系
+    @Value("${tcp.roomId1}")
+    private String roomId1;
+    @Value("${tcp.station1}")
+    private String station1;
+    @Value("${tcp.roomId2}")
+    private String roomId2;
+    @Value("${tcp.station2}")
+    private String station2;
+
 
 }

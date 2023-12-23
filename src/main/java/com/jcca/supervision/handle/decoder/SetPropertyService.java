@@ -29,7 +29,7 @@ import java.util.List;
 
 /**
  * @author sophia
- * @description 获取指定ID的属性值
+ * @description 获取指定 ID的属性值
  * @date 2023/11/28 10:43
  */
 @Service
@@ -306,6 +306,8 @@ public class SetPropertyService implements ResponseHandleAdapter {
         //属性入库
         if (ObjectUtil.isNotNull(propertyList) && !propertyList.isEmpty()) {
             Gson gson = new Gson();
+            //清空设备数据
+            deviceService.removeAll();
             for (PropertyData propertyData : propertyList) {
            try {
                 if (propertyData.getType() == DataConst.STATION) {
@@ -331,6 +333,7 @@ public class SetPropertyService implements ResponseHandleAdapter {
                logger.error(e.toString());
            }
             redisService.set(DataConst.DH_PROERTY+"_"+propertyData.getPropertyId(), gson.toJson(propertyData));
+            redisService.set(DataConst.DH_PROERTY_PARENT+"_"+propertyData.getPropertyId(),propertyData.getParentID());
             }
         }
     }
