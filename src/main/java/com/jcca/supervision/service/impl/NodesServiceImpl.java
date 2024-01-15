@@ -6,6 +6,9 @@ import com.jcca.supervision.mapper.NodesMapper;
 import com.jcca.supervision.service.NodesService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.List;
+
 /**
  * @description: 节点
  * @author: sophia
@@ -13,4 +16,11 @@ import org.springframework.stereotype.Service;
  **/
 @Service
 public class NodesServiceImpl extends ServiceImpl<NodesMapper, Nodes> implements NodesService {
+    @Resource
+   private NodesMapper nodesMapper;
+    @Override
+    public List<String> getNodesByParentId(String nodeId) {
+
+     return  nodesMapper.getNodesByParentId(nodeId);
+    }
 }
