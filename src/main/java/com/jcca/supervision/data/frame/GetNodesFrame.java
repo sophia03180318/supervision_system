@@ -26,6 +26,9 @@ public class GetNodesFrame extends BaseDataFrame implements Serializable {
         this.setRootId(rootId);
     }
 
+    public static String getRootId() {
+        return rootId;
+    }
 
     public static void setRootId(String rootId) {
         GetNodesFrame.rootId = rootId;

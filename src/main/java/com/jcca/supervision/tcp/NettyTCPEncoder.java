@@ -1,9 +1,7 @@
 package com.jcca.supervision.tcp;
 
 import com.jcca.common.LogUtil;
-import com.jcca.supervision.data.frame.BaseDataFrame;
-import com.jcca.supervision.data.frame.HeartbeatFrame;
-import com.jcca.supervision.data.frame.LoginDataFrame;
+import com.jcca.supervision.data.frame.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.util.Random;
 
 /**
  * @author sophia
@@ -25,37 +22,42 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, BaseDataFrame dataFrame, ByteBuf out) throws Exception {
-        Random random = new Random();
-        if (dataFrame instanceof LoginDataFrame) {
-            out.writeByte(LoginDataFrame.LEN);
-            out.writeByte(random.nextInt());
-            out.writeByte(LoginDataFrame.DATA_TYPE);
+
+            out.writeByte(dataFrame.getLen());
+            out.writeByte(dataFrame.getNum());
+            out.writeByte(dataFrame.getType());
+
+        if (dataFrame instanceof LoginDataFrame) {    //登录
+
             out.writeCharSequence(LoginDataFrame.getUserName(), Charset.forName("GBK"));
             out.writeCharSequence(LoginDataFrame.getPassword(), Charset.forName("GBK"));
-            LoginDataFrame login = (LoginDataFrame) dataFrame;
-            encode(login, out);
 
-        } else if (dataFrame instanceof HeartbeatFrame) {
-            out.writeByte(HeartbeatFrame.LEN);
-            out.writeByte(random.nextInt());
-            out.writeByte(HeartbeatFrame.DATA_TYPE);
-            HeartbeatFrame heart = (HeartbeatFrame) dataFrame;
-            encode(heart, out);
+        } else if (dataFrame instanceof HeartbeatFrame) {   //心跳
 
-        } else if (dataFrame instanceof HeartbeatFrame) {
+
+        } else if (dataFrame instanceof GetNodesFrame) {   //子孙节点
+            GetNodesFrame nodes = (GetNodesFrame) dataFrame;
+            out.writeLongLE(Long.decode(nodes.getRootId()));
+
+        } else if (dataFrame instanceof GetSubstructFrame) {    //子节点
+            GetSubstructFrame node = (GetSubstructFrame) dataFrame;
+            out.writeLongLE(Long.decode(node.getRootId()));
+
+        } else if (dataFrame instanceof SetAlarmModeFrame) {    //设置告警模式
+            SetAlarmModeFrame alarm = (SetAlarmModeFrame) dataFrame;
+            out.writeLongLE(Long.decode(alarm.getGroupId()));
+            out.writeLongLE(Long.decode(alarm.getMode()));
+            out.writeLongLE(Long.decode(alarm.getCount()));
+            out.writeLongLE(Long.decode(alarm.getIds()));
+
+        } else if (dataFrame instanceof SetDynAccessModeFrame) {  //设置数据模式
+            SetDynAccessModeFrame model = (SetDynAccessModeFrame) dataFrame;
 
         } else {
-            logger.warn(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "不能发送非心跳消息内容", ByteBufUtil.hexDump(out)));
+            logger.warn(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "不能未知类型消息内容", ByteBufUtil.hexDump(out)));
         }
     }
 
-
-    /**
-     * 心跳
-     */
-    private void encode(HeartbeatFrame frame, ByteBuf out) {
-
-    }
 
     /**
      * 登录

@@ -13,4 +13,6 @@ public interface DeviceService extends IService<Device> {
      * 清空设备数据
      * */
     void removeAll();
+
+
 }

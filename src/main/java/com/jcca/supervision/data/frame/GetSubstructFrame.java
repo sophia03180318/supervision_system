@@ -12,6 +12,7 @@ import java.util.Random;
  **/
 public class GetSubstructFrame extends BaseDataFrame implements Serializable {
 
+
     /**
      * 命令字
      */
@@ -31,6 +32,9 @@ public class GetSubstructFrame extends BaseDataFrame implements Serializable {
         GetSubstructFrame.rootId = rootId;
     }
 
+    public static String getRootId() {
+        return rootId;
+    }
 
     public static GetSubstructFrame newInstance(String rootId) {
         return new GetSubstructFrame(rootId);

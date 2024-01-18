@@ -9,6 +9,7 @@ import com.jcca.common.ResultVo;
 import com.jcca.common.config.TcpConfig;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.frame.*;
+import com.jcca.supervision.service.DeviceService;
 import com.jcca.supervision.service.NodesService;
 import com.jcca.supervision.tcp.NettyTCPClient;
 import com.jcca.util.AppPattenUtils;
@@ -20,11 +21,10 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -39,8 +39,8 @@ import java.util.concurrent.Executors;
  * @description 控制页面
  * @date 2023/11/28 13:40
  */
+@RestController
 @Api(tags = "TCP控制页面")
-@Controller
 @RequestMapping("/tcp")
 public class TcpController {
 
@@ -54,16 +54,16 @@ public class TcpController {
     private RedisService redisService;
     @Resource
     private NodesService nodesService;
-
+    @Resource
+    private DeviceService deviceService;
 
     /**
      * 设置实时告警方式
      */
     @GetMapping("/setAlarmMode/{mode}")
     @ApiOperation(value = "获取指定节点的子节点")
-    public ResultVo<List<String>> setAlarmMode(@PathVariable String mode) {
+    public ResultVo<List<String>> setAlarmMode(@PathVariable String mode ) {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
-
         if (!channel.isActive()) {
             return ResultVoUtil.error("动环程序未启动");
         }
@@ -131,7 +131,6 @@ public class TcpController {
      * 同步动环的设备
      */
     @GetMapping("/pullAllDevice")
-    @ResponseBody
     @ApiOperation(value = "同步动环所有设备")
     public Object pullAllDevice() {
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
@@ -150,7 +149,7 @@ public class TcpController {
         channel.writeAndFlush(HeartbeatFrame.newInstance());
 
         //调取ITSM接口
-        String body = HttpRequest.post(pushUrl + "/api/free/syslog/saveLog").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+        String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
         return "同步成功~";
     }
 
@@ -175,13 +174,27 @@ public class TcpController {
         return ResultVoUtil.success("配置成功");
     }
 
-    @GetMapping("/startTcp1")
-    @ResponseBody
-    @ApiOperation(value = "启动服务")
-    public Object startTcp1() {
+
+    /**
+     * 查询TCP状态
+     */
+    @ApiOperation(value = "查询TCP状态")
+    @GetMapping("/serialStatus")
+    public String serialStatus() {
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
         if (Objects.nonNull(o) && "1".equals(o)) {
-            return "不能重复启动TCP服务";
+            return "true";
+        }
+        return "false";
+    }
+
+
+    @GetMapping("/startTcp1")
+    @ApiOperation(value = "启动服务")
+    public ResultVo startTcp1() {
+        Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
+        if (Objects.nonNull(o) && "1".equals(o)) {
+            return ResultVoUtil.error("不能重复启动TCP服务");
         }
         DataConst.TEMP_MAP.put(DataConst.NETTY_CHANNEL_FLAG, "1");
         logger.warn(LogUtil.buildLog("成功启动", "请参看运行情况"));
@@ -195,16 +208,15 @@ public class TcpController {
 
         // 启动定时任务
         NettyBooter.SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(6);
-        return "手动启动TCP服务成功";
+        return ResultVoUtil.success("手动启动TCP服务成功");
     }
 
     @GetMapping("/stopTcp1")
-    @ResponseBody
     @ApiOperation(value = "关闭服务")
-    public static Object stopTcp1() {
+    public static ResultVo stopTcp1() {
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
         if (Objects.isNull(o) || "0".equals(o)) {
-            return "请先启动TCP一号服务";
+            return ResultVoUtil.error("请先启动TCP一号服务");
         }
         DataConst.TEMP_MAP.put(DataConst.NETTY_CHANNEL_FLAG, "0");
 
@@ -214,17 +226,16 @@ public class TcpController {
 
             NettyBooter.SCHEDULED_EXECUTOR_SERVICE.shutdown();
         }
-        return "一号链接断开，断后不会自动重连直到再次手动启动";
+        return ResultVoUtil.success("一号链接断开，断后不会自动重连直到再次手动启动");
     }
 
 
     @GetMapping("/stopTcp2")
-    @ResponseBody
     @ApiOperation(value = "关闭二号链接")
-    public static Object stopTcp2() {
+    public static ResultVo stopTcp2() {
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG2);
         if (Objects.isNull(o) || "0".equals(o)) {
-            return "请先启动TCP一号服务";
+            return ResultVoUtil.error("请先启动TCP二号服务");
         }
         DataConst.TEMP_MAP.put(DataConst.NETTY_CHANNEL_FLAG2, "0");
 
@@ -232,6 +243,6 @@ public class TcpController {
         if (Objects.nonNull(channel) && channel.isActive()) {
             channel.close();
         }
-        return "二号链接断开，断后不会自动重连直到再次登陆成功";
+        return ResultVoUtil.success("二号链接断开，断后不会自动重连直到再次登陆成功");
     }
 }

@@ -46,6 +46,21 @@ public class SetAlarmModeFrame extends BaseDataFrame implements Serializable {
         SetAlarmModeFrame.ids = ids;
     }
 
+    public static String getGroupId() {
+        return groupId;
+    }
+
+    public static String getMode() {
+        return mode;
+    }
+
+    public static String getCount() {
+        return count;
+    }
+
+    public static String getIds() {
+        return ids;
+    }
 
     public static SetAlarmModeFrame newInstance(String rootId) {
         return new SetAlarmModeFrame(rootId);
