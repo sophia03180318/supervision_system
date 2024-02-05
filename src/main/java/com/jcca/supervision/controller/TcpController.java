@@ -1,18 +1,19 @@
 package com.jcca.supervision.controller;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.http.HttpRequest;
 import com.jcca.common.LogUtil;
 import com.jcca.common.NettyBooter;
 import com.jcca.common.RedisService;
 import com.jcca.common.ResultVo;
 import com.jcca.common.config.TcpConfig;
 import com.jcca.supervision.constant.DataConst;
-import com.jcca.supervision.data.frame.*;
+import com.jcca.supervision.data.frame.GetNodesFrame;
+import com.jcca.supervision.data.frame.GetSubstructFrame;
+import com.jcca.supervision.data.frame.SetAlarmModeFrame;
+import com.jcca.supervision.data.frame.SetDynAccessModeFrame;
 import com.jcca.supervision.service.DeviceService;
 import com.jcca.supervision.service.NodesService;
 import com.jcca.supervision.tcp.NettyTCPClient;
-import com.jcca.util.AppPattenUtils;
 import com.jcca.util.ResultVoUtil;
 import com.jcca.util.SpringUtil;
 import io.netty.channel.Channel;
@@ -132,7 +133,7 @@ public class TcpController {
      */
     @GetMapping("/pullAllDevice")
     @ApiOperation(value = "同步动环所有设备")
-    public Object pullAllDevice() {
+    public ResultVo pullAllDevice() {
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
         String station1 = tcpConfig.getStation1();
         String station2 = tcpConfig.getStation2();
@@ -140,17 +141,17 @@ public class TcpController {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
 
         if (!channel.isActive()) {
-            return "通道未开启,请先启动服务~";
+            return  ResultVoUtil.success("通道未开启,请先启动服务~");
         }
         //同步机房1的设备
-        channel.writeAndFlush(HeartbeatFrame.newInstance());
+        channel.writeAndFlush(GetSubstructFrame.newInstance(station1));
 
         //同步机房2的设备
-        channel.writeAndFlush(HeartbeatFrame.newInstance());
+        channel.writeAndFlush(GetSubstructFrame.newInstance(station2));
 
         //调取ITSM接口
-        String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-        return "同步成功~";
+      // String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+        return  ResultVoUtil.success("同步成功");
     }
 
 
@@ -165,9 +166,9 @@ public class TcpController {
             return ResultVoUtil.error("动环程序未启动");
         }
 
-        if (!AppPattenUtils.isNumber(secondsStr) || Integer.getInteger(secondsStr) < 15) {
+/*        if (!AppPattenUtils.isNumber(secondsStr) || Integer.getInteger(secondsStr) < 15) {
             return ResultVoUtil.error("传入正确的间隔秒数,不可小于15秒");
-        }
+        }*/
 
         //获取指定节点的所有子孙节点信息
         channel.writeAndFlush(SetDynAccessModeFrame.newInstance(Integer.getInteger(secondsStr)));

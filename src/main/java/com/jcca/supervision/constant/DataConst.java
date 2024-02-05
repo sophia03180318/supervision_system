@@ -36,8 +36,8 @@ public interface DataConst {
     int GET_ACTIVE_ALARM = 0x01F8; // 请求所有当前报警        504
     int SET_ACTIVE_ALARM = 0x01F9; // 请求所有当前告警响应     505
 
-    String USER_NAME = "ITSM";   //用户名
-    String PASSWORD = "PASSWORD"; //口令
+    String USER_NAME = "zhjc";   //用户名
+    String PASSWORD = "123"; //口令
 
 
     //登录权限
@@ -57,7 +57,7 @@ public interface DataConst {
 
     // 心跳间隔15秒
     Long HEART_PERIOD_15 = 15L; // 心跳间隔15秒
-    String MSG_HEART_BEAT = "04b1"; // 心跳内容
+    String MSG_HEART_BEAT = "04b2"; // 心跳内容
 
 
     // netty通道key

@@ -23,34 +23,47 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
     @Override
     protected void encode(ChannelHandlerContext ctx, BaseDataFrame dataFrame, ByteBuf out) throws Exception {
 
-            out.writeByte(dataFrame.getLen());
-            out.writeByte(dataFrame.getNum());
-            out.writeByte(dataFrame.getType());
 
         if (dataFrame instanceof LoginDataFrame) {    //登录
-
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
             out.writeCharSequence(LoginDataFrame.getUserName(), Charset.forName("GBK"));
             out.writeCharSequence(LoginDataFrame.getPassword(), Charset.forName("GBK"));
 
         } else if (dataFrame instanceof HeartbeatFrame) {   //心跳
-
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
 
         } else if (dataFrame instanceof GetNodesFrame) {   //子孙节点
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
             GetNodesFrame nodes = (GetNodesFrame) dataFrame;
-            out.writeLongLE(Long.decode(nodes.getRootId()));
+            out.writeInt(Integer.decode(nodes.getRootId()));
 
         } else if (dataFrame instanceof GetSubstructFrame) {    //子节点
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
             GetSubstructFrame node = (GetSubstructFrame) dataFrame;
-            out.writeLongLE(Long.decode(node.getRootId()));
+            out.writeInt(Integer.decode(node.getRootId()));
 
         } else if (dataFrame instanceof SetAlarmModeFrame) {    //设置告警模式
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
             SetAlarmModeFrame alarm = (SetAlarmModeFrame) dataFrame;
-            out.writeLongLE(Long.decode(alarm.getGroupId()));
-            out.writeLongLE(Long.decode(alarm.getMode()));
-            out.writeLongLE(Long.decode(alarm.getCount()));
-            out.writeLongLE(Long.decode(alarm.getIds()));
+            out.writeInt(Integer.decode(alarm.getGroupId()));
+            out.writeInt(Integer.decode(alarm.getMode()));
+            out.writeInt(Integer.decode(alarm.getCount()));
+            out.writeInt(Integer.decode(alarm.getIds()));
 
         } else if (dataFrame instanceof SetDynAccessModeFrame) {  //设置数据模式
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
             SetDynAccessModeFrame model = (SetDynAccessModeFrame) dataFrame;
 
         } else {

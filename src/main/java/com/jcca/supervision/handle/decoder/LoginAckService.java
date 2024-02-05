@@ -6,15 +6,12 @@ import com.jcca.common.config.TcpConfig;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
-import com.jcca.supervision.tcp2.NettyTCPClient2;
-import com.jcca.util.SpringUtil;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.concurrent.Executor;
 
 /**
  * @author sophia
@@ -50,6 +47,7 @@ public class LoginAckService implements ResponseHandleAdapter {
 
         //登录权限
         int rightMode = contentBuf.readInt();
+        logger.info(LogUtil.buildLog("登录响应，权限代码为" ,rightMode));
         if (rightMode==DataConst.INVALID){
             logger.info(LogUtil.buildLog("登录失失败，用此户无权限：权限代码为" ,rightMode));
         }
@@ -58,16 +56,17 @@ public class LoginAckService implements ResponseHandleAdapter {
         }
         if (rightMode==DataConst.LEVEL2){
             logger.info(LogUtil.buildLog("登录成功：获取读写权限：权限代码为" ,rightMode));
-        }
-
-        DataBaseInfo baseInfo = new DataBaseInfo();
-
-       // 登陆成功启动客户端
+/*            // 登陆成功启动客户端
         Executor taskExecutor = (Executor) SpringUtil.getBean("taskExecutor");
         taskExecutor.execute(() -> {
            NettyTCPClient2 tcpClient2 = new NettyTCPClient2(tcpConfig.getTcpIp(), tcpConfig.getTcpPort2());
             tcpClient2.connect();
-        });
+        });*/
+        }
+
+        DataBaseInfo baseInfo = new DataBaseInfo();
+
+
 
         return baseInfo;
     }

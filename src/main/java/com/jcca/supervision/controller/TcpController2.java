@@ -1,36 +1,6 @@
 package com.jcca.supervision.controller;
 
-import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.jcca.common.LogUtil;
-import com.jcca.common.NettyBooter;
-import com.jcca.common.RedisService;
-import com.jcca.common.ResultVo;
-import com.jcca.common.config.TcpConfig;
-import com.jcca.supervision.constant.DataConst;
-import com.jcca.supervision.entity.Device;
-import com.jcca.supervision.service.DeviceService;
-import com.jcca.supervision.service.NodesService;
-import com.jcca.supervision.tcp.NettyTCPClient;
-import com.jcca.util.PagePlugin;
-import com.jcca.util.ResultVoUtil;
-import com.jcca.util.SpringUtil;
-import io.netty.channel.Channel;
-import io.swagger.annotations.ApiOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.annotation.Resource;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 /**
  * @author sophia
@@ -39,7 +9,7 @@ import java.util.concurrent.Executors;
  */
 @Controller
 public class TcpController2 {
-
+/*
     @Value("${pushUrl}")
     private String pushUrl;
 
@@ -54,9 +24,9 @@ public class TcpController2 {
     private DeviceService deviceService;
 
 
-    /**
+    *//**
      * 初始页面
-     */
+     *//*
     @ApiOperation(value = "初始页面")
     @GetMapping("/")
     public String index(Model model, Device device,Integer size, Integer page) {
@@ -77,9 +47,9 @@ public class TcpController2 {
     }
 
 
-    /**
+    *//**
      * 查询TCP状态
-     */
+     *//*
     @ApiOperation(value = "查询TCP状态")
     @GetMapping("/serialStatus")
     public String serialStatus() {
@@ -149,5 +119,5 @@ public class TcpController2 {
             channel.close();
         }
         return ResultVoUtil.success("二号链接断开，断后不会自动重连直到再次登陆成功");
-    }
+    }*/
 }
