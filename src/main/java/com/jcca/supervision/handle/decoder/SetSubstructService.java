@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,9 @@ public class SetSubstructService implements ResponseHandleAdapter {
         DataBaseInfo baseInfo = new DataBaseInfo();
         List<NodesData> nodeList = new ArrayList<>();
         int nodeCount = contentBuf.readInt();// 节点个数
+        if (nodeCount == 0) {
+            return nodeList;
+        }
         if (nodeCount == -1) {
             logger.info(LogUtil.buildLog("节点个数过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
             return nodeList;
@@ -94,8 +98,9 @@ public class SetSubstructService implements ResponseHandleAdapter {
             Nodes nodes = new Nodes();
             nodes.setId(nodesData.getId());
             nodes.setParentId(nodesData.getParentId());
+            nodes.setCreateTime(new Date());
             nodesService.saveOrUpdate(nodes);
         }
-        redisService.set(DataConst.DH_NODE_ID_LIST,nodeList.stream().map(NodesData::getId).collect(Collectors.toList()));
+        redisService.set(DataConst.DH_NODE_ID_LIST, nodeList.stream().map(NodesData::getId).collect(Collectors.toList()));
     }
 }

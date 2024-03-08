@@ -4,9 +4,9 @@ logging:
 spring:
   datasource:
     druid:
-      url: jdbc:oracle:thin:@192.168.51.29:1521/bhm
-      username: itsm
-      password: itsm
+      url: jdbc:oracle:thin:@192.168.73.26:1521/bhm
+      username: jndata
+      password: jndata
 
       type: com.alibaba.druid.pool.DruidDataSource
       initialSize: 5
@@ -39,7 +39,7 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
   redis:
-    host: 192.168.51.29
+    host: 192.168.73.26
     port: 6379
     password: jcca@123
     jedis:
@@ -96,7 +96,7 @@ tcp:
   station1: "1074790400"
 
   #ITSM 机房二号ID
-  roomId2: "4-120"
+  roomId2: "4-111"
   #动环 机房二号ID
   station2: "1074790401"
 

@@ -57,7 +57,8 @@ public interface DataConst {
 
     // 心跳间隔15秒
     Long HEART_PERIOD_15 = 15L; // 心跳间隔15秒
-    String MSG_HEART_BEAT = "04b2"; // 心跳内容
+    String MSG_HEART_BEAT = "04b"; // 心跳内容
+
 
 
     // netty通道key

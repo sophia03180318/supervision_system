@@ -50,7 +50,15 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
             GetSubstructFrame node = (GetSubstructFrame) dataFrame;
             out.writeInt(Integer.decode(node.getRootId()));
 
-        } else if (dataFrame instanceof SetAlarmModeFrame) {    //设置告警模式
+        } else if (dataFrame instanceof GetPrpertyFrame) {    //获取属性点
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
+            out.writeInt(1);
+            GetPrpertyFrame node = (GetPrpertyFrame) dataFrame;
+            out.writeInt(Integer.decode(node.getId()));
+
+        }else if (dataFrame instanceof SetAlarmModeFrame) {    //设置告警模式
             out.writeInt(dataFrame.getLen());
             out.writeInt(dataFrame.getNum());
             out.writeInt(dataFrame.getType());
@@ -61,10 +69,15 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
             out.writeInt(Integer.decode(alarm.getIds()));
 
         } else if (dataFrame instanceof SetDynAccessModeFrame) {  //设置数据模式
+            SetDynAccessModeFrame mode = (SetDynAccessModeFrame) dataFrame;
             out.writeInt(dataFrame.getLen());
             out.writeInt(dataFrame.getNum());
             out.writeInt(dataFrame.getType());
-            SetDynAccessModeFrame model = (SetDynAccessModeFrame) dataFrame;
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(1);
+            out.writeInt(mode.getSeconds());
+            out.writeInt(1);
+            out.writeInt(Integer.decode(mode.getIds()));
 
         } else {
             logger.warn(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "不能未知类型消息内容", ByteBufUtil.hexDump(out)));

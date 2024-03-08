@@ -1,6 +1,5 @@
 package com.jcca.supervision.handle.decoder;
 
-import com.jcca.common.LogUtil;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import io.netty.buffer.ByteBuf;
@@ -39,7 +38,7 @@ public class HeartbeatService implements ResponseHandleAdapter {
     public Object decode(ByteBuf contentBuf) {
         // 心跳消息不处理
         String heartInfo = ByteBufUtil.hexDump(contentBuf);
-        logger.info(LogUtil.buildLog("收到心跳回复", heartInfo));
+       // logger.info(LogUtil.buildLog("收到心跳回复", heartInfo));
         contentBuf.clear();
         return null;
     }

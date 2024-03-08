@@ -9,11 +9,12 @@ import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
 import com.jcca.supervision.data.PropertyData;
 import com.jcca.supervision.entity.Device;
+import com.jcca.supervision.entity.Property;
 import com.jcca.supervision.entity.Station;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import com.jcca.supervision.service.DeviceService;
+import com.jcca.supervision.service.PropertyService;
 import com.jcca.supervision.service.StationService;
-import com.jcca.util.MyIdUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
@@ -42,7 +43,8 @@ public class SetPropertyService implements ResponseHandleAdapter {
     private DeviceService deviceService;
     @Resource
     private StationService stationService;
-
+    @Resource
+    private PropertyService propertyService;
 
 
     /**
@@ -85,7 +87,7 @@ public class SetPropertyService implements ResponseHandleAdapter {
             property.setPropertyId(String.valueOf(id));
             property.setParentID(String.valueOf(parentID));
             property.setName(name);
-            property.setDesc(des);
+            property.setDescc(des);
 
             switch (type) {
                 //STATION = 0  局、站
@@ -285,8 +287,8 @@ public class SetPropertyService implements ResponseHandleAdapter {
     }
 
     private String getTimeStr(String time) {
-        if (time.length()==1){
-           return "0"+time;
+        if (time.length() == 1) {
+            return "0" + time;
         }
         return time;
     }
@@ -306,34 +308,83 @@ public class SetPropertyService implements ResponseHandleAdapter {
         //属性入库
         if (ObjectUtil.isNotNull(propertyList) && !propertyList.isEmpty()) {
             Gson gson = new Gson();
-            //清空设备数据
-            deviceService.removeAll();
+
             for (PropertyData propertyData : propertyList) {
-           try {
-                if (propertyData.getType() == DataConst.STATION) {
-                    Station station = new Station();
-                    BeanUtils.copyProperties(propertyData, station);
-                    station.setId(MyIdUtil.getIncId());
-                    station.setStationId(propertyData.getPropertyId());
-                    station.setCreateTime(baseInfo.getTime());
-                    stationService.save(station);
-                    continue;
+                try {
+                    int type = propertyData.getType();
+                    switch (type) {
+                        //STATION = 0  局、站
+                        case DataConst.STATION:
+                            Station station = new Station();
+                            BeanUtils.copyProperties(propertyData, station);
+                            station.setId(propertyData.getPropertyId());
+                            station.setStationId(propertyData.getPropertyId());
+                            station.setCreateTime(baseInfo.getTime());
+                            stationService.saveOrUpdate(station);
+                            break;
+
+                            //DEVICE = 1  设备
+                        case DataConst.DEVICE:
+                            Device device = new Device();
+                            BeanUtils.copyProperties(propertyData, device);
+                            device.setId(propertyData.getPropertyId());
+                            device.setDeviceId(propertyData.getPropertyId());
+                            device.setBeginRunTime(sdf.parse(propertyData.getBeginRunTime()));
+                            device.setCreateTime(baseInfo.getTime());
+                            deviceService.saveOrUpdate(device);
+                            break;
+/*
+                            //DI = 2   二态数字输入量
+                        case DataConst.DI:
+                            String value2 = String.valueOf(contentBuf.readUnsignedByte()); //数值
+                            int status2 = contentBuf.readInt();  //数值状态 EnumAlarmLevel
+                            propertyValue.setValue(value2);
+                            propertyValue.setStatus(status2);
+                            break;
+
+                        //AI = 3    模拟输入量
+                        case DataConst.AI:
+                            String value3 = String.valueOf(contentBuf.readFloat());
+                            int status3 = contentBuf.readInt();  //数值状态 EnumAlarmLevel
+                            propertyValue.setValue(value3);
+                            propertyValue.setStatus(status3);
+                            break;
+
+                        //DO = 4    数字输出量
+                        case DataConst.DO:
+                            String value4 = String.valueOf(contentBuf.readUnsignedByte()); //数值
+                            int status4 = contentBuf.readInt();  //数值状态 EnumAlarmLevel
+                            propertyValue.setValue(value4);
+                            propertyValue.setStatus(status4);
+                            break;
+
+                        //AO = 5    模拟输出量
+                        case DataConst.AO:
+                            String value5 = String.valueOf(contentBuf.readFloat());
+                            int status5 = contentBuf.readInt();  //数值状态 EnumAlarmLevel
+                            propertyValue.setValue(value5);
+                            propertyValue.setStatus(status5);
+                            break;
+
+                        //STRIN = 6  字符串量
+                        case DataConst.STRIN:
+                            int len = contentBuf.readInt(); //字符串长度
+                            String value6 = contentBuf.readCharSequence(len, Charset.forName("GBK")).toString(); //字符串值
+                            propertyValue.setValue(value6);
+                            break;*/
+
+                        default:
+                            Property property = new Property();
+                            property.setId(propertyData.getPropertyId());
+                            BeanUtils.copyProperties(propertyData,property);
+                            propertyService.saveOrUpdate(property);
+                            break;
+                    }
+                } catch (Exception e) {
+                    logger.error(e.toString());
                 }
-                if (propertyData.getType() == DataConst.DEVICE) {
-                    Device device = new Device();
-                    BeanUtils.copyProperties(propertyData, device);
-                    device.setId(MyIdUtil.getIncId());
-                    device.setDeviceId(propertyData.getPropertyId());
-                    device.setBeginRunTime(sdf.parse(propertyData.getBeginRunTime()));
-                    device.setCreateTime(baseInfo.getTime());
-                    deviceService.save(device);
-                    continue;
-                }
-            }catch (Exception e){
-               logger.error(e.toString());
-           }
-            redisService.set(DataConst.DH_PROERTY+"_"+propertyData.getPropertyId(), gson.toJson(propertyData));
-            redisService.set(DataConst.DH_PROERTY_PARENT+"_"+propertyData.getPropertyId(),propertyData.getParentID());
+                redisService.set(DataConst.DH_PROERTY + "_" + propertyData.getPropertyId(), gson.toJson(propertyData));
+                redisService.set(DataConst.DH_PROERTY_PARENT + "_" + propertyData.getPropertyId(), propertyData.getParentID());
             }
         }
     }

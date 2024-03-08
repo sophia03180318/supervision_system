@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -89,6 +90,7 @@ public class SetNodesAckService implements ResponseHandleAdapter {
             Nodes nodes = new Nodes();
             nodes.setId(nodesData.getId());
             nodes.setParentId(nodesData.getParentId());
+            nodes.setCreateTime(new Date());
             nodesService.saveOrUpdate(nodes);
         }
         redisService.set(DataConst.DH_NODE, JSON.toJSONString(nodeList));

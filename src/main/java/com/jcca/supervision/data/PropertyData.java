@@ -36,7 +36,7 @@ public class PropertyData{
     private String propertyId;
     private String parentID;
     private String name;
-    private String desc;
+    private String descc;
     private Float maxVal;
     private Float minVal;
     private Integer alarmlevel;

@@ -51,7 +51,7 @@ public class Property {
     private String name;
 
     @TableField("DATA_DESC")
-    private String desc;
+    private String descc;
 
     @TableField("MAXVAL")
     private Float maxVal;
