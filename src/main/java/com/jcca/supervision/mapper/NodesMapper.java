@@ -14,4 +14,6 @@ import java.util.List;
 public interface NodesMapper extends BaseMapper<Nodes> {
     @Select("select id from DH_NODE where PARENT_ID = #{nodeId}")
     List<String> getNodesByParentId(String nodeId);
+    @Select("select id from DH_NODE where TYPE = #{type}")
+    List<String> getNodesIdByType(String type);
 }

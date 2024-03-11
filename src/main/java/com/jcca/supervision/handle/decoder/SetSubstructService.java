@@ -73,11 +73,18 @@ public class SetSubstructService implements ResponseHandleAdapter {
         if (ObjectUtil.isNotNull(o)) {
             parentId = (String) o;
         }
+
+        Object t = redisService.get(DataConst.DH_NODE_ID_LEVEL);
+        String type ="1";
+        if (ObjectUtil.isNotNull(t)) {
+            type = (String) t;
+        }
         for (int i = 0; i < nodeCount; i++) {
             long nodeId = contentBuf.readUnsignedInt();
             NodesData node = new NodesData();
             node.setId(Long.toString(nodeId));
             node.setParentId(parentId);
+            node.setType(type);
             nodeList.add(node);
         }
         baseInfo.setDataNodesList(nodeList);
@@ -98,6 +105,7 @@ public class SetSubstructService implements ResponseHandleAdapter {
             Nodes nodes = new Nodes();
             nodes.setId(nodesData.getId());
             nodes.setParentId(nodesData.getParentId());
+            nodes.setType(nodesData.getType());
             nodes.setCreateTime(new Date());
             nodesService.saveOrUpdate(nodes);
         }

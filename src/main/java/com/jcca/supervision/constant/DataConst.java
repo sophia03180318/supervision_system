@@ -48,6 +48,7 @@ public interface DataConst {
 
     //Redis
     String DH_NODE_ID = "dhNodeId";//里面存储当前询问父节点的ID  可手动更新      String
+    String DH_NODE_ID_LEVEL="dhNodeIdLevel"; ////里面存储当前询问的类型  可手动更新      String
     String DH_NODE_ID_LIST = "dhNodeIdList";//里面存储当前询问父节点的子ID列表 List<String>
 
     String DH_NODE = "dhNode";//节点信息Key  里面存储所有节点信息 List<Nodes>

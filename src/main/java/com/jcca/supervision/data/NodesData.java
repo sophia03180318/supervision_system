@@ -11,4 +11,5 @@ import lombok.Data;
 public class NodesData {
     private String Id;
     private String parentId;
+    private String type;
 }

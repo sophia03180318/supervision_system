@@ -24,6 +24,12 @@ public class Nodes {
     @TableField("PARENT_ID")
     private String parentId;
 
+    /**
+     * 1=LSC 2=STATION 3=DEVICE 4=PROPERTY
+     * */
+    @TableField("TYPE")
+    private String type;
+
     @TableField("CREATE_TIME")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;

@@ -13,4 +13,6 @@ import java.util.List;
 public interface NodesService extends IService<Nodes> {
     List<String> getNodesByParentId(String nodeId);
 
+    List<String> getNodesIdByType(String type);
+
 }

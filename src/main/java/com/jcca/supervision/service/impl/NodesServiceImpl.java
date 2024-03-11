@@ -23,4 +23,10 @@ public class NodesServiceImpl extends ServiceImpl<NodesMapper, Nodes> implements
 
      return  nodesMapper.getNodesByParentId(nodeId);
     }
+
+    @Override
+    public List<String> getNodesIdByType(String type) {
+
+      return   nodesMapper.getNodesIdByType(type);
+    }
 }

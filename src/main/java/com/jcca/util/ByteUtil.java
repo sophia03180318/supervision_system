@@ -70,4 +70,22 @@ public class ByteUtil {
         buffer.get(array, 0, array.length);
         return array;
     }
+
+
+    public static String getDhId(long id) {
+        String str = new StringBuilder(Long.toBinaryString(id)).reverse().toString();
+
+       String ddd = Integer.toHexString(Integer.parseInt(str.substring(0, 11),2));
+        String cc = Integer.toHexString(Integer.parseInt(str.substring(11, 17),2));
+        String bbb = Integer.toHexString(Integer.parseInt(str.substring(17, 27),2));
+        String aa = Integer.toHexString(Integer.parseInt(str.substring(27),2));
+
+/*        String aa = Integer.toHexString(Integer.parseInt(string.substring(0,5),2));
+        String bbb = Integer.toHexString(Integer.parseInt(string.substring(5, 15),2));
+        String cc = Integer.toHexString(Integer.parseInt(string.substring(15, 21),2));
+        String ddd = Integer.toHexString(Integer.parseInt(string.substring(21),2));*/
+        return aa+"."+bbb+"."+cc+"."+ddd;
+    }
+
+
 }

@@ -1,6 +1,7 @@
 package com.jcca.supervision.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcca.common.LogUtil;
 import com.jcca.common.NettyBooter;
 import com.jcca.common.RedisService;
@@ -8,7 +9,6 @@ import com.jcca.common.ResultVo;
 import com.jcca.common.config.TcpConfig;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.frame.*;
-import com.jcca.supervision.entity.Device;
 import com.jcca.supervision.entity.Nodes;
 import com.jcca.supervision.service.DeviceService;
 import com.jcca.supervision.service.NodesService;
@@ -57,19 +57,39 @@ public class TcpController {
     @Resource
     private DeviceService deviceService;
 
+
     /**
-     * 设置实时告警方式
+     * 同步指定节点的下层节点2号
      */
-    @GetMapping("/setAlarmMode/{mode}")
-    @ApiOperation(value = "设置实时告警方式")
-    public ResultVo<List<String>> setAlarmMode(@PathVariable String mode) {
+    @GetMapping("/getAllNodes2")
+    @ApiOperation(value = "同步所有节点")
+    public ResultVo<List<String>> getAllNodes2() throws InterruptedException {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
         if (!channel.isActive()) {
             return ResultVoUtil.error("动环程序未启动");
         }
-        //设置想要获取的告警等级
-        channel.writeAndFlush(SetAlarmModeFrame.newInstance(mode));
-        return ResultVoUtil.success();
+
+        for (int i = 0; i < 4; i++) {
+            //获取指定节点的所有下层节点信息
+            QueryWrapper<Nodes> qw = new QueryWrapper<>();
+            qw.eq("type", i);
+            List<Nodes> list = nodesService.list(qw);
+            if (list.isEmpty()) {
+                Nodes nodes1 = new Nodes();
+                nodes1.setId("0");
+                list.add(nodes1);
+            }
+            for (Nodes nodes : list) {
+                //获取此节点的信息
+                String nodeId = nodes.getId();
+                Thread.sleep(500);
+                redisService.set(DataConst.DH_NODE_ID, nodeId);
+                redisService.set(DataConst.DH_NODE_ID_LEVEL, i + 1 + "");
+                channel.writeAndFlush(GetSubstructFrame.newInstance(nodeId));
+            }
+            Thread.sleep(500);
+        }
+        return ResultVoUtil.success("执行成功");
     }
 
 
@@ -95,64 +115,27 @@ public class TcpController {
 
 
     /**
-     * 同步指定节点的下层节点2号
+     * 同步动环的设备
      */
-    @GetMapping("/getAllNodes2")
-    @ApiOperation(value = "同步指定节点的所有下一层节点")
-    public ResultVo<List<String>> getAllNodes2() throws InterruptedException {
+    @GetMapping("/pullAllDevice/{nodeId}")
+    @ApiOperation(value = "同步动环所有设备")
+    public ResultVo pullAllDevice() throws InterruptedException {
+        Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+
         if (!channel.isActive()) {
-            return ResultVoUtil.error("动环程序未启动");
+            return ResultVoUtil.success("通道未开启,请先启动服务~");
         }
-        //获取指定节点的所有下层节点信息
-        List<Nodes> list = nodesService.list();
-        if (list.isEmpty()) {
-            Nodes nodes1 = new Nodes();
-            nodes1.setId("0");
-            list.add(nodes1);
-        }
-        for (Nodes nodes : list) {
-            //获取此节点的信息
-            String nodeId = nodes.getId();
+
+        List<String> ids = nodesService.getNodesIdByType("3");
+        for (String id : ids) {
             Thread.sleep(500);
-            redisService.set(DataConst.DH_NODE_ID, nodeId);
-            channel.writeAndFlush(GetSubstructFrame.newInstance(nodeId));
+            channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
         }
-        return ResultVoUtil.success("执行成功:" + list.size() + "次");
-    }
 
-
-    /**
-     * 同步指定节点的所有下层节点
-     */
-    @GetMapping("/getAllNodes/{nodeId}")
-    @ApiOperation(value = "获取指定节点的所有下层节点")
-    public ResultVo<List<String>> getAllNodes(@PathVariable String nodeId) {
-        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
-        if (!channel.isActive()) {
-            return ResultVoUtil.error("动环程序未启动");
-        }
-        //获取此节点的信息
-        redisService.set(DataConst.DH_NODE_ID, nodeId);
-        //获取指定节点的所有子孙节点信息
-        channel.writeAndFlush(GetNodesFrame.newInstance(nodeId));
-
-        List<String> nodes = nodesService.getNodesByParentId(nodeId);
-        //所有子孙节点
-        List<String> allNode = nodes;
-        for (int i = 1; i <= 3; i++) {
-            //每次循环的当层节点
-            List<String> nodeList = new ArrayList<>();
-            for (String id : nodes) {
-                List<String> nodes2 = nodesService.getNodesByParentId(id);
-                if (ObjectUtil.isNotNull(nodes2) && !nodes2.isEmpty()) {
-                    nodeList.addAll(nodes2);
-                    allNode.addAll(nodes2);
-                }
-            }
-            nodes = nodeList;
-        }
-        return ResultVoUtil.success(allNode);
+        //调取ITSM接口
+        // String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+        return ResultVoUtil.success("同步" + ids.size() + "台设备");
     }
 
 
@@ -166,46 +149,16 @@ public class TcpController {
         if (!channel.isActive()) {
             return ResultVoUtil.error("动环程序未启动");
         }
-        List<Device> deviceList = deviceService.list();
-        int i=0;
-        for (Device device : deviceList) {
-            List<String> nodes = nodesService.getNodesByParentId(device.getId());
-            for (String node : nodes) {
-                i++;
-                Thread.sleep(500);
-                channel.writeAndFlush(GetPrpertyFrame.newInstance(node));
-            }
+        List<String> ids = nodesService.getNodesIdByType("4");
+
+        for (String id : ids) {
+            channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
+            Thread.sleep(500);
 
         }
-       return ResultVoUtil.success("共获取"+i+"个属性值");
+        return ResultVoUtil.success("共获取" + ids.size() + "个属性值");
     }
 
-    /**
-     * 同步动环的设备
-     */
-    @GetMapping("/pullAllDevice/{nodeId}")
-    @ApiOperation(value = "同步动环所有设备")
-    public ResultVo pullAllDevice(@PathVariable String nodeId) {
-        Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
-        String station1 = tcpConfig.getStation1();
-        String station2 = tcpConfig.getStation2();
-
-        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
-
-        if (!channel.isActive()) {
-            return ResultVoUtil.success("通道未开启,请先启动服务~");
-        }
-        //同步机房1的设备
-        station1 = nodeId;
-        channel.writeAndFlush(GetPrpertyFrame.newInstance(station1));
-
-        //同步机房2的设备
-        // channel.writeAndFlush(GetSubstructFrame.newInstance(station2));
-
-        //调取ITSM接口
-        // String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-        return ResultVoUtil.success("同步成功");
-    }
 
     /**
      * 实时获取数据属性
@@ -221,6 +174,24 @@ public class TcpController {
         return ResultVoUtil.success("配置成功");
 
     }
+
+
+    /**
+     * 实时获取数据属性
+     */
+    @GetMapping("/getAlarm")
+    @ApiOperation(value = "获取当前告警")
+    public ResultVo<List<String>> getAlarm() {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
+        }
+        channel.writeAndFlush(GetActiveAlarmFrame.newInstance());
+        //AlarmService
+        return ResultVoUtil.success("获取成功");
+
+    }
+
 
 
     /**
@@ -241,6 +212,22 @@ public class TcpController {
         //获取指定节点的所有子孙节点信息
         channel.writeAndFlush(SetDynAccessModeFrame.newInstance(Integer.getInteger(secondsStr), ids));
         return ResultVoUtil.success("配置成功");
+    }
+
+
+    /**
+     * 设置实时告警方式
+     */
+    @GetMapping("/setAlarmMode/{mode}")
+    @ApiOperation(value = "设置实时告警方式")
+    public ResultVo<List<String>> setAlarmMode(@PathVariable String mode) {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
+        }
+        //设置想要获取的告警等级
+        channel.writeAndFlush(SetAlarmModeFrame.newInstance(mode));
+        return ResultVoUtil.success();
     }
 
 
@@ -314,4 +301,38 @@ public class TcpController {
         }
         return ResultVoUtil.success("二号链接断开，断后不会自动重连直到再次登陆成功");
     }
+
+    /**
+     * 同步指定节点的所有下层节点
+     */
+    @GetMapping("/getAllNodes/{nodeId}")
+    @ApiOperation(value = "获取指定节点的所有下层节点")
+    public ResultVo<List<String>> getAllNodes(@PathVariable String nodeId) {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
+        }
+        //获取此节点的信息
+        redisService.set(DataConst.DH_NODE_ID, nodeId);
+        //获取指定节点的所有子孙节点信息
+        channel.writeAndFlush(GetNodesFrame.newInstance(nodeId));
+
+        List<String> nodes = nodesService.getNodesByParentId(nodeId);
+        //所有子孙节点
+        List<String> allNode = nodes;
+        for (int i = 1; i <= 3; i++) {
+            //每次循环的当层节点
+            List<String> nodeList = new ArrayList<>();
+            for (String id : nodes) {
+                List<String> nodes2 = nodesService.getNodesByParentId(id);
+                if (ObjectUtil.isNotNull(nodes2) && !nodes2.isEmpty()) {
+                    nodeList.addAll(nodes2);
+                    allNode.addAll(nodes2);
+                }
+            }
+            nodes = nodeList;
+        }
+        return ResultVoUtil.success(allNode);
+    }
+
 }

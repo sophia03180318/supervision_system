@@ -79,7 +79,11 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
             out.writeInt(1);
             out.writeInt(Integer.decode(mode.getIds()));
 
-        } else {
+        } else if (dataFrame instanceof GetActiveAlarmFrame) {   //当前告警
+            out.writeInt(dataFrame.getLen());
+            out.writeInt(dataFrame.getNum());
+            out.writeInt(dataFrame.getType());
+        }else {
             logger.warn(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "不能未知类型消息内容", ByteBufUtil.hexDump(out)));
         }
     }

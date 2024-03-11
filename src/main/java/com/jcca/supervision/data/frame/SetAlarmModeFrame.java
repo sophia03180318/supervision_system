@@ -26,7 +26,7 @@ public class SetAlarmModeFrame extends BaseDataFrame implements Serializable {
         this.setLen(LEN);
         this.setNum(new Random().nextInt());
         this.setType(DATA_TYPE);
-        this.setGroupId("0");
+        this.setGroupId("123321");
         this.setMode(mode);
         this.setCount("0");
         this.setIds("1");
