@@ -209,7 +209,6 @@ public class TcpController {
             return ResultVoUtil.error("传入正确的间隔秒数,不可小于15秒");
         }*/
 
-        //获取指定节点的所有子孙节点信息
         channel.writeAndFlush(SetDynAccessModeFrame.newInstance(Integer.getInteger(secondsStr), ids));
         return ResultVoUtil.success("配置成功");
     }

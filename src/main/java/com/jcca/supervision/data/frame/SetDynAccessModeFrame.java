@@ -15,7 +15,7 @@ public class SetDynAccessModeFrame extends BaseDataFrame implements Serializable
     /**
      * 命令字
      */
-    public static int DATA_TYPE = DataConst.GET_NODES;
+    public static int DATA_TYPE = DataConst.SET_DYN_ACCESS_MODE;
     public static int LEN = DataConst.MIN_MSG_LEN + 20;
     private static Integer seconds;
     private static String ids;
