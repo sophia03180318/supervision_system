@@ -6,6 +6,8 @@ import com.jcca.supervision.mapper.AlarmMapper;
 import com.jcca.supervision.service.AlarmService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+
 /**
  * @description:
  * @author: sophia
@@ -13,4 +15,11 @@ import org.springframework.stereotype.Service;
  **/
 @Service
 public class AlarmServiceImpl extends ServiceImpl<AlarmMapper, Alarm> implements AlarmService {
+    @Resource
+    private AlarmMapper alarmMapper;
+
+    @Override
+    public void deleteAlarm() {
+        alarmMapper.deleteAlarm();
+    }
 }

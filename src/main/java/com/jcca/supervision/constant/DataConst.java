@@ -36,8 +36,10 @@ public interface DataConst {
     int GET_ACTIVE_ALARM = 0x01F8; // 请求所有当前报警        504
     int SET_ACTIVE_ALARM = 0x01F9; // 请求所有当前告警响应     505
 
+/*
     String USER_NAME = "zhjc";   //用户名
     String PASSWORD = "123"; //口令
+*/
 
 
     //登录权限

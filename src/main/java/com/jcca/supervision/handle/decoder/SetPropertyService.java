@@ -328,6 +328,8 @@ public class SetPropertyService implements ResponseHandleAdapter {
                             Device device = new Device();
                             BeanUtils.copyProperties(propertyData, device);
                             device.setId(propertyData.getPropertyId());
+                            device.setDeviceType(propertyData.getDeviceType());
+                            device.setVersion(propertyData.getVersion());
                             device.setDeviceId(propertyData.getPropertyId());
                             device.setBeginRunTime(sdf.parse(propertyData.getBeginRunTime()));
                             device.setCreateTime(baseInfo.getTime());

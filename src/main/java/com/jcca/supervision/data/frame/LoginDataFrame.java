@@ -1,7 +1,9 @@
 package com.jcca.supervision.data.frame;
 
+import com.jcca.common.config.TcpConfig;
 import com.jcca.supervision.constant.DataConst;
 
+import javax.annotation.Resource;
 import java.io.Serializable;
 import java.util.Random;
 
@@ -12,13 +14,16 @@ import java.util.Random;
  **/
 public class LoginDataFrame extends BaseDataFrame implements Serializable {
 
+    @Resource
+    private TcpConfig tcpConfig;
+
     /**
      * 命令字
      */
     public static int DATA_TYPE = DataConst.LOGIN;
     public static int LEN = DataConst.MIN_MSG_LEN + 60;
-    public static String USER_NAME = DataConst.USER_NAME;
-    public static String PASSWORD = DataConst.PASSWORD;
+    public static String USER_NAME = "zhjc";
+    public static String PASSWORD = "123";
 
     private LoginDataFrame() {
         this.setLen(LEN);

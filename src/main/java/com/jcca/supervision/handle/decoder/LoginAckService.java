@@ -44,28 +44,28 @@ public class LoginAckService implements ResponseHandleAdapter {
      */
     @Override
     public Object decode(ByteBuf contentBuf) {
-
+        DataBaseInfo baseInfo = new DataBaseInfo();
         //登录权限
         int rightMode = contentBuf.readInt();
-        logger.info(LogUtil.buildLog("登录响应，权限代码为" ,rightMode));
-        if (rightMode==DataConst.INVALID){
-            logger.info(LogUtil.buildLog("登录失失败，用此户无权限：权限代码为" ,rightMode));
+        logger.info(LogUtil.buildLog("登录响应，权限代码为", rightMode));
+        if (rightMode == DataConst.INVALID) {
+            logger.error(LogUtil.buildLog("登录失失败，用此户无权限：权限代码为", rightMode));
+            return baseInfo;
+
+        } else if (rightMode == DataConst.LEVEL1) {
+            logger.info(LogUtil.buildLog("登录成功，获取读权限：权限代码为", rightMode));
+
+        } else if (rightMode == DataConst.LEVEL2) {
+            logger.info(LogUtil.buildLog("登录成功：获取读写权限：权限代码为", rightMode));
+        } else {
+            logger.error(LogUtil.buildLog("登录失失败! 请校验用户名密码!", rightMode));
         }
-        if (rightMode==DataConst.LEVEL1){
-            logger.info(LogUtil.buildLog("登录成功，获取读权限：权限代码为" ,rightMode));
-        }
-        if (rightMode==DataConst.LEVEL2){
-            logger.info(LogUtil.buildLog("登录成功：获取读写权限：权限代码为" ,rightMode));
-/*            // 登陆成功启动客户端
+/*        // 登陆成功启动客户端
         Executor taskExecutor = (Executor) SpringUtil.getBean("taskExecutor");
         taskExecutor.execute(() -> {
-           NettyTCPClient2 tcpClient2 = new NettyTCPClient2(tcpConfig.getTcpIp(), tcpConfig.getTcpPort2());
+            NettyTCPClient2 tcpClient2 = new NettyTCPClient2(tcpConfig.getTcpIp(), tcpConfig.getTcpPort2());
             tcpClient2.connect();
         });*/
-        }
-
-        DataBaseInfo baseInfo = new DataBaseInfo();
-
 
 
         return baseInfo;

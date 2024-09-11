@@ -1,6 +1,7 @@
 package com.jcca.supervision.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpRequest;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcca.common.LogUtil;
 import com.jcca.common.NettyBooter;
@@ -9,7 +10,9 @@ import com.jcca.common.ResultVo;
 import com.jcca.common.config.TcpConfig;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.frame.*;
+import com.jcca.supervision.entity.Device;
 import com.jcca.supervision.entity.Nodes;
+import com.jcca.supervision.service.AlarmService;
 import com.jcca.supervision.service.DeviceService;
 import com.jcca.supervision.service.NodesService;
 import com.jcca.supervision.tcp.NettyTCPClient;
@@ -56,13 +59,15 @@ public class TcpController {
     private NodesService nodesService;
     @Resource
     private DeviceService deviceService;
+    @Resource
+    private AlarmService alarmService;
 
 
     /**
-     * 同步指定节点的下层节点2号
+     * 同步指定节点的下层节点
      */
     @GetMapping("/getAllNodes2")
-    @ApiOperation(value = "同步所有节点")
+    @ApiOperation(value = "同步所有节点(超时没关系)")
     public ResultVo<List<String>> getAllNodes2() throws InterruptedException {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
         if (!channel.isActive()) {
@@ -93,26 +98,6 @@ public class TcpController {
     }
 
 
-    /**
-     * 同步指定节点的子节点
-     */
-    @GetMapping("/getNodes/{nodeId}")
-    @ApiOperation(value = "获取指定节点的子节点")
-    public ResultVo<List<String>> getNodes(@PathVariable String nodeId) {
-        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
-
-        if (!channel.isActive()) {
-            return ResultVoUtil.error("动环程序未启动");
-        }
-        //获取此节点的信息
-        redisService.set(DataConst.DH_NODE_ID, nodeId);
-        //获取指定节点的子节点信息
-        channel.writeAndFlush(GetSubstructFrame.newInstance(nodeId));
-
-        List<String> nodes = nodesService.getNodesByParentId(nodeId);
-        return ResultVoUtil.success(nodes);
-    }
-
 
     /**
      * 同步动环的设备
@@ -120,6 +105,7 @@ public class TcpController {
     @GetMapping("/pullAllDevice/{nodeId}")
     @ApiOperation(value = "同步动环所有设备")
     public ResultVo pullAllDevice() throws InterruptedException {
+
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
 
@@ -132,11 +118,17 @@ public class TcpController {
             Thread.sleep(500);
             channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
         }
+        List<Device> list = deviceService.list();
+        if (!list.isEmpty()){
+            //调取ITSM接口
+            String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+            return ResultVoUtil.success("共推送"+list.size()+"台设备");
+        }
 
-        //调取ITSM接口
-        // String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-        return ResultVoUtil.success("同步" + ids.size() + "台设备");
+        return ResultVoUtil.success("无设备可推送");
     }
+
+
 
 
     /**
@@ -161,6 +153,27 @@ public class TcpController {
 
 
     /**
+     * 同步指定节点的子节点
+     */
+    @GetMapping("/getNodes/{nodeId}")
+    @ApiOperation(value = "获取指定节点的下层子节点")
+    public ResultVo<List<String>> getNodes(@PathVariable String nodeId) {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
+        }
+        //获取此节点的信息
+        redisService.set(DataConst.DH_NODE_ID, nodeId);
+        //获取指定节点的子节点信息
+        channel.writeAndFlush(GetSubstructFrame.newInstance(nodeId));
+        List<String> nodes = nodesService.getNodesByParentId(nodeId);
+        return ResultVoUtil.success(nodes);
+    }
+
+
+
+    /**
      * 实时获取数据属性
      */
     @GetMapping("/getProperty")
@@ -181,13 +194,13 @@ public class TcpController {
      */
     @GetMapping("/getAlarm")
     @ApiOperation(value = "获取当前告警")
-    public ResultVo<List<String>> getAlarm() {
+    public ResultVo<List<String>> getAlarm() throws InterruptedException {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
         if (!channel.isActive()) {
             return ResultVoUtil.error("动环程序未启动");
         }
         channel.writeAndFlush(GetActiveAlarmFrame.newInstance());
-        //AlarmService
+        Thread.sleep(500);
         return ResultVoUtil.success("获取成功");
 
     }
@@ -208,8 +221,9 @@ public class TcpController {
 /*        if (!AppPattenUtils.isNumber(secondsStr) || Integer.getInteger(secondsStr) < 15) {
             return ResultVoUtil.error("传入正确的间隔秒数,不可小于15秒");
         }*/
+        Integer seconds = Integer.parseInt(secondsStr);
 
-        channel.writeAndFlush(SetDynAccessModeFrame.newInstance(Integer.getInteger(secondsStr), ids));
+        channel.writeAndFlush(SetDynAccessModeFrame.newInstance(seconds, ids));
         return ResultVoUtil.success("配置成功");
     }
 

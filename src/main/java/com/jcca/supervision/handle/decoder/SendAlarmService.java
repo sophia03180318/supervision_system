@@ -75,9 +75,9 @@ public class SendAlarmService implements ResponseHandleAdapter {
             String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
             Alarm alarmData = new Alarm();
             alarmData.setPropertyId(String.valueOf(dataId));
-            alarmData.setLevel(level);
+            alarmData.setLevell(level);
             //解析告警详情
-            alarmData.setDesc(desc);
+            alarmData.setDescc(desc);
             alarmDataList.add(alarmData);
         }
         baseInfo.setAlarmDataList(alarmDataList);
@@ -96,7 +96,13 @@ public class SendAlarmService implements ResponseHandleAdapter {
         if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
             for (Alarm alarm : alarmDataList) {
+                Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
+                if (ObjectUtil.isNull(cacheData)) {
+                    logger.error("未获取到此监测点位的设备ID：" + DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
+                    continue;
+                }
                 alarm.setId(MyIdUtil.getIncId());
+                alarm.setDeviceId((String) cacheData);
                 alarm.setCreateTime(baseInfo.getTime());
                 Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
                 alarmService.save(alarmInfo);

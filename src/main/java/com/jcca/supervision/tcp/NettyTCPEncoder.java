@@ -73,11 +73,11 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
             out.writeInt(dataFrame.getLen());
             out.writeInt(dataFrame.getNum());
             out.writeInt(dataFrame.getType());
-            out.writeInt(dataFrame.getNum());
-            out.writeInt(1);
-            out.writeInt(mode.getSeconds());
-            out.writeInt(1);
-            out.writeInt(Integer.decode(mode.getIds()));
+            out.writeInt(dataFrame.getNum());//数据发送序号
+            out.writeInt(1);//数据发送方式
+            out.writeInt(mode.getSeconds());//相隔秒数
+            out.writeInt(1);//实时数据的数量
+            out.writeInt(Integer.decode(mode.getIds()));//设备ID
 
         } else if (dataFrame instanceof GetActiveAlarmFrame) {   //当前告警
             out.writeInt(dataFrame.getLen());

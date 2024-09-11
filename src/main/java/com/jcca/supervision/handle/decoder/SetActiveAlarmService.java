@@ -10,7 +10,6 @@ import com.jcca.supervision.entity.Alarm;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import com.jcca.supervision.handle.decoder.utils.decodeUtil;
 import com.jcca.supervision.service.AlarmService;
-import com.jcca.supervision.service.PropertyService;
 import com.jcca.util.MyIdUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -32,8 +31,6 @@ import java.util.List;
 public class SetActiveAlarmService implements ResponseHandleAdapter {
     @Resource
     private RedisService redisService;
-    @Resource
-    private PropertyService propertyService;
     @Resource
     private AlarmService alarmService;
 
@@ -64,21 +61,25 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
         if (cnt == -1) {
             logger.info(LogUtil.buildLog("当前告警信息过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
         }
-
+        logger.info("获取到" + cnt + "条告警~");
         for (int i = 0; i < cnt; i++) {
-            long dataId = contentBuf.readUnsignedInt();//数据ID
-            int level = contentBuf.readInt();//状态
-            //告警等级不够直接掠过
-            if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
-                continue;
+            try {
+                long dataId = contentBuf.readUnsignedInt();//数据ID
+                int level = contentBuf.readInt();//状态
+                //告警等级不够直接掠过
+                if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
+                    continue;
+                }
+                String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
+                Alarm alarmData = new Alarm();
+                alarmData.setPropertyId(String.valueOf(dataId));
+                alarmData.setLevell(level);
+                //解析告警详情
+                alarmData.setDescc(desc);
+                alarmDataList.add(alarmData);
+            } catch (Exception e) {
+                logger.info("获取到" + cnt + "条告警,但解析中发生错误");
             }
-            String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
-            Alarm alarmData = new Alarm();
-            alarmData.setPropertyId(String.valueOf(dataId));
-            alarmData.setLevel(level);
-            //解析告警详情
-            alarmData.setDesc(desc);
-            alarmDataList.add(alarmData);
         }
         baseInfo.setAlarmDataList(alarmDataList);
         return baseInfo;
@@ -95,6 +96,9 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
         DataBaseInfo baseInfo = (DataBaseInfo) obj;
         if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
+/*            if (!alarmDataList.isEmpty()){
+                alarmService.deleteAlarm();
+            }*/
             for (Alarm alarm : alarmDataList) {
                 Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
                 if (ObjectUtil.isNull(cacheData)) {

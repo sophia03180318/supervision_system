@@ -9,4 +9,8 @@ import com.jcca.supervision.entity.Alarm;
  * @create: 2023/11/30 15:27
  **/
 public interface AlarmService extends IService<Alarm> {
+    /**
+     * 清空告警
+     * */
+    void deleteAlarm();
 }

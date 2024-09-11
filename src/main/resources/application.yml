@@ -67,7 +67,7 @@ mybatis-plus:
   log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 #itsm地址
-pushUrl: 192.168.51.29:5501
+pushUrl: 192.168.73.26:5508
 
 
 # 动环配置
@@ -76,26 +76,27 @@ tcp:
   open: 1
   # 接口服务器IP
   host: 211.103.195.246
-  #host: 192.168.1.14
   # 接口服务器端口
   port: 15001
   # 接口服务器端口2
   port2: 15001
+  #用户名
+  username: zhjc
+  #密码
+  password: 1231
+
   # 数据过期时间，即数据发送周期 单位 秒
   receive-timeout: 5
   # 超时检查周期，即数据过期时间的2倍加1
   cron: "*/11 * * * * ?"
-  # 测试用服务端是否开启,0不开启,1开启，生产环境必须设置为 0
-  server: 0
-  # 基数数据文件
-  baseFile: D:\home\data\
 
-  #ITSM 机房一号ID
+
+  #ITSM 客专机房号ID
   roomId1: "4-110"
   #动环 机房一号ID
   station1: "1074790400"
 
-  #ITSM 机房二号ID
+  #ITSM 普速机房ID
   roomId2: "4-111"
   #动环 机房二号ID
   station2: "1074790401"

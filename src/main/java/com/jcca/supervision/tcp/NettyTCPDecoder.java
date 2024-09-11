@@ -37,8 +37,8 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
             logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "收到TCP心跳", "砰"));
             in.clear();
         } else {
-            decodeFrame(in, out);
             logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "收到TCP原始内容", hexDump));
+            decodeFrame(in, out);
         }
     }
 

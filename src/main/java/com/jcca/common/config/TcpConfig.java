@@ -22,14 +22,13 @@ public class TcpConfig {
     private int tcpPort2;
     @Value("${tcp.open}")
     private int tcpOpen;
+    @Value("${tcp.username}")
+    private String username;
+    @Value("${tcp.password}")
+    private String password;
     @Value("${tcp.receive-timeout}")
     private Long tcpReceiveTimeout;
-    @Value("${tcp.cron}")
-    private String tcpCron;
-    @Value("${tcp.baseFile}")
-    private String tcpBaseFile;
-    @Value("${tcp.server}")
-    private int tcpServerTest;
+
 
     //itsm 对接动环机房关联关系
     @Value("${tcp.roomId1}")
@@ -40,6 +39,5 @@ public class TcpConfig {
     private String roomId2;
     @Value("${tcp.station2}")
     private String station2;
-
 
 }

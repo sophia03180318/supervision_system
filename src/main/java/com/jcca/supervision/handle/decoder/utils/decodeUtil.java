@@ -24,7 +24,7 @@ public class decodeUtil {
     }
 
     public static Alarm getAlarmInfo(Alarm alarm) {
-        String desc = alarm.getDesc();
+        String desc = alarm.getDescc();
         String[] split = desc.split("\\t");
         for (int i = 0; i < split.length; i++) {
             String data = split[i].trim();
