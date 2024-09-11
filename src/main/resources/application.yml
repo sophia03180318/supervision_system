@@ -4,9 +4,9 @@ logging:
 spring:
   datasource:
     druid:
-      url: jdbc:oracle:thin:@192.168.73.26:1521/bhm
-      username: jndata
-      password: jndata
+      url: jdbc:oracle:thin:@192.168.51.10:1521/itsm
+      username: itsm
+      password: itsm
 
       type: com.alibaba.druid.pool.DruidDataSource
       initialSize: 5
@@ -39,7 +39,7 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
   redis:
-    host: 192.168.73.26
+    host: 192.168.73.66
     port: 6379
     password: jcca@123
     jedis:
@@ -67,7 +67,7 @@ mybatis-plus:
   log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 #itsm地址
-pushUrl: 192.168.73.26:5508
+pushUrl: 192.168.73.66:5501
 
 
 # 动环配置

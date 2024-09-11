@@ -103,7 +103,7 @@ public class TcpController {
      * 同步动环的设备
      */
     @GetMapping("/pullAllDevice/{nodeId}")
-    @ApiOperation(value = "同步动环所有设备")
+    @ApiOperation(value = "同步并推送动环所有设备")
     public ResultVo pullAllDevice() throws InterruptedException {
 
         Object o = DataConst.TEMP_MAP.get(DataConst.NETTY_CHANNEL_FLAG);
@@ -128,7 +128,22 @@ public class TcpController {
         return ResultVoUtil.success("无设备可推送");
     }
 
+    /**
+     * 同步动环的设备
+     */
+    @GetMapping("/pullAllDevice2")
+    @ApiOperation(value = "推送动环所有设备")
+    public ResultVo pullAllDevice2()  {
 
+        List<Device> list = deviceService.list();
+        if (!list.isEmpty()){
+            //调取ITSM接口
+            String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+            return ResultVoUtil.success("共推送"+list.size()+"台设备");
+        }
+
+        return ResultVoUtil.success("无设备可推送");
+    }
 
 
     /**

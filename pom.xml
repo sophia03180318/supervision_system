@@ -75,6 +75,12 @@
             <version>4.1.75.Final</version>
         </dependency>
 
+        <!-- 用于解决： 不支持的字符集 (在类路径中添加 orai18n.jar): ZHS16GBK; -->
+        <dependency>
+            <groupId>cn.easyproject</groupId>
+            <artifactId>orai18n</artifactId>
+            <version>12.1.0.2.0</version>
+        </dependency>
         <dependency>
             <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>

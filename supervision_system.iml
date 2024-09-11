@@ -110,6 +110,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Maven: io.netty:netty-transport-native-kqueue:osx-aarch_64:4.1.75.Final" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.1.75.Final" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: io.netty:netty-resolver-dns-native-macos:osx-aarch_64:4.1.75.Final" level="project" />
+    <orderEntry type="library" name="Maven: cn.easyproject:orai18n:12.1.0.2.0" level="project" />
     <orderEntry type="library" name="Maven: dom4j:dom4j:1.6.1" level="project" />
     <orderEntry type="library" name="Maven: xml-apis:xml-apis:1.4.01" level="project" />
     <orderEntry type="library" name="Maven: org.projectlombok:lombok:1.18.10" level="project" />
