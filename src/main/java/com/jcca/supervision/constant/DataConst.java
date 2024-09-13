@@ -33,6 +33,7 @@ public interface DataConst {
     int SET_ALARM_MODE = 0x01F5; // 请求报警数据方式设置     501
     int ALARM_MODE_ACK = 0x01F6; // 报警方式设置响应         502
     int SEND_ALARM = 0x01F7; // 实时报警发送                 503
+    int SEND_ALARM2 = 0x0318; // 实时报警发送                 503
     int GET_ACTIVE_ALARM = 0x01F8; // 请求所有当前报警        504
     int SET_ACTIVE_ALARM = 0x01F9; // 请求所有当前告警响应     505
 

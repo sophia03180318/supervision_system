@@ -184,7 +184,7 @@
     </dependencies>
 
     <build>
-        <finalName>broker</finalName>
+        <finalName>dh</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

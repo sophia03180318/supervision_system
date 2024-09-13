@@ -7,6 +7,7 @@ import com.jcca.supervision.handle.TcpResponseHandler;
 import com.jcca.util.SpringUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import java.util.Objects;
  */
 public class NettyTCPDecoder extends ByteToMessageDecoder {
 
+    private long time = 0;
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
@@ -54,27 +56,50 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
         }
 
         long l = in.readUnsignedInt();// 报文长度
-
-        if (l != allLen) {
-            logger.warn(LogUtil.buildLog("数据与标识长度不一致!", ByteBufUtil.hexDump(in)));
-            in.clear();
-            return;
-        }
-
         long num = in.readUnsignedInt();// 报文序号
         Integer type = Integer.parseInt(String.valueOf(in.readUnsignedInt()));// 报文类型
-        // 交给适配器处理
-        TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-        Object obj = handler.decode(type, in);
-        //获取解码后的对象
-        if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
-            DataBaseInfo baseInfo = (DataBaseInfo) obj;
-            baseInfo.setCode(type);
-            baseInfo.setNum(num);
-            baseInfo.setTime(new Date());
-            out.add(baseInfo);
-        }
+        if (allLen == l) {
+            // 交给适配器处理
+            TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+            Object obj = handler.decode(type, in);
+            //获取解码后的对象
+            if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
+                DataBaseInfo baseInfo = (DataBaseInfo) obj;
+                baseInfo.setCode(type);
+                baseInfo.setNum(num);
+                baseInfo.setTime(new Date());
+                out.add(baseInfo);
+            }
 
+        } else {
+            if (type == 0x01F7) {
+                time = System.currentTimeMillis();
+                TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+                Object obj = handler.decode(type, Unpooled.copiedBuffer(in));
+                if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
+                    DataBaseInfo baseInfo = (DataBaseInfo) obj;
+                    baseInfo.setCode(type);
+                    baseInfo.setNum(num);
+                    baseInfo.setTime(new Date());
+                    out.add(baseInfo);
+                }
+            } else {
+                if ( System.currentTimeMillis()-time < 3000) {
+                    TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+                    Object obj = handler.decode(0x0318, Unpooled.copiedBuffer(in));
+                    if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
+                        DataBaseInfo baseInfo = (DataBaseInfo) obj;
+                        baseInfo.setCode(0x01F7);
+                        baseInfo.setNum(num);
+                        baseInfo.setTime(new Date());
+                        out.add(baseInfo);
+                    }
+                }else {
+                    in.clear();
+                }
+            }
+
+        }
     }
 
 }
