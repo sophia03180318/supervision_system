@@ -1,8 +1,6 @@
 package com.jcca.supervision.handle.decoder;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.fastjson.JSON;
-import com.jcca.common.LogUtil;
 import com.jcca.common.RedisService;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
@@ -56,16 +54,17 @@ public class SendAlarmService2 implements ResponseHandleAdapter {
     @Override
     public Object decode(ByteBuf contentBuf) {
         DataBaseInfo baseInfo = new DataBaseInfo();
-        ArrayList<Alarm> alarmDataList = new ArrayList<Alarm>();
-        while (contentBuf.readableBytes() > 168) {
+        ArrayList<Alarm> alarmDataList = new ArrayList<>();
+        while (contentBuf.readableBytes() >= 168) {
             try {
                 long dataId = contentBuf.readUnsignedInt();//数据ID
                 int level = contentBuf.readInt();//状态
+                String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
                 //告警等级不够直接掠过
                 if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
                     continue;
                 }
-                String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
+
                 Alarm alarmData = new Alarm();
                 alarmData.setPropertyId(String.valueOf(dataId));
                 alarmData.setLevell(level);
@@ -87,14 +86,14 @@ public class SendAlarmService2 implements ResponseHandleAdapter {
      */
     @Override
     public void handle(Object obj) {
-        logger.info(LogUtil.buildLog("告警2信息处理：", JSON.toJSONString(obj)));
         DataBaseInfo baseInfo = (DataBaseInfo) obj;
         if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
+            logger.info("告警二号开始处理："+ alarmDataList.size()+"条");
             for (Alarm alarm : alarmDataList) {
                 Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
                 if (ObjectUtil.isNull(cacheData)) {
-                    logger.error("未获取到此监测点位的设备ID：" + DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
+                    logger.error("未获取到此监测点位的设备ID：" +  alarm.getPropertyId());
                     continue;
                 }
                 alarm.setId(MyIdUtil.getIncId());

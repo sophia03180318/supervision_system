@@ -16,7 +16,7 @@ public class SetAlarmModeFrame extends BaseDataFrame implements Serializable {
      * 命令字
      */
     public static int DATA_TYPE = DataConst.SET_ALARM_MODE;
-    public static int LEN = DataConst.MIN_MSG_LEN + 16;
+    public static int LEN = DataConst.MIN_MSG_LEN + 12;
     private static String groupId;
     private static String mode;
     private static String count;
@@ -28,8 +28,8 @@ public class SetAlarmModeFrame extends BaseDataFrame implements Serializable {
         this.setType(DATA_TYPE);
         this.setGroupId("123321");
         this.setMode(mode);
-        this.setCount("0");
-        this.setIds("1");
+        //this.setCount("0");
+       // this.setIds("1");
     }
 
 

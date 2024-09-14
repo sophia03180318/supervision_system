@@ -7,8 +7,10 @@ import com.jcca.common.config.TcpConfig;
 import com.jcca.common.constant.BrokerConst;
 import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
+import com.jcca.supervision.data.frame.GetActiveAlarmFrame;
 import com.jcca.supervision.data.frame.HeartbeatFrame;
 import com.jcca.supervision.data.frame.LoginDataFrame;
+import com.jcca.supervision.data.frame.SetAlarmModeFrame;
 import com.jcca.supervision.handle.TcpResponseHandler;
 import com.jcca.util.SpringUtil;
 import io.netty.channel.Channel;
@@ -47,6 +49,8 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
         logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "TCP连接成功", ctx.channel().id().toString()));
         sendHeartbeat(ctx);
         sendLogin(ctx);
+        sendAlarm(ctx);
+        sendModel(ctx);
     }
 
     private void sendHeartbeat(ChannelHandlerContext ctx) {
@@ -66,6 +70,20 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
         }
     }
 
+    private void sendAlarm(ChannelHandlerContext ctx) {
+        Channel channel = ctx.channel();
+        if (channel.isActive()) {
+            ctx.writeAndFlush(GetActiveAlarmFrame.newInstance());
+        }
+    }
+
+
+    private void sendModel(ChannelHandlerContext ctx) {
+        Channel channel = ctx.channel();
+        if (channel.isActive()) {
+            ctx.writeAndFlush(SetAlarmModeFrame.newInstance("3"));
+        }
+    }
 
     /**
      * 接收消息统一处理

@@ -45,37 +45,31 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
     }
 
     private synchronized void decodeFrame(ByteBuf in, List<Object> out) {
-        //readableBytes  读取数据长度
-        int allLen = in.readableBytes();
+        try {
+            in.markReaderIndex();
+            //readableBytes  读取数据长度
+            int allLen = in.readableBytes();
 
-        //最小消息长度
-        if (allLen < DataConst.MIN_MSG_LEN) {
-            logger.warn(LogUtil.buildLog("丢弃过短的消息，长度为 ", allLen + ""));
-            in.clear();
-            return;
-        }
-
-        long l = in.readUnsignedInt();// 报文长度
-        long num = in.readUnsignedInt();// 报文序号
-        Integer type = Integer.parseInt(String.valueOf(in.readUnsignedInt()));// 报文类型
-        if (allLen == l) {
-            // 交给适配器处理
-            TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-            Object obj = handler.decode(type, in);
-            //获取解码后的对象
-            if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
-                DataBaseInfo baseInfo = (DataBaseInfo) obj;
-                baseInfo.setCode(type);
-                baseInfo.setNum(num);
-                baseInfo.setTime(new Date());
-                out.add(baseInfo);
+            //最小消息长度
+            if (allLen < DataConst.MIN_MSG_LEN) {
+                logger.warn(LogUtil.buildLog("丢弃过短的消息，长度为 ", allLen + ""));
+                in.clear();
+                return;
             }
 
-        } else {
-            if (type == 0x01F7) {
-                time = System.currentTimeMillis();
+            long l = in.readUnsignedInt();// 报文长度
+            long num = in.readUnsignedInt();// 报文序号
+            int type = 0;
+            try {
+                type = Integer.parseInt(String.valueOf(in.readUnsignedInt()));// 报文类型
+            } catch (NumberFormatException e) {
+
+            }
+            if (allLen == l) {
+                // 交给适配器处理
                 TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-                Object obj = handler.decode(type, Unpooled.copiedBuffer(in));
+                Object obj = handler.decode(type, in);
+                //获取解码后的对象
                 if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
                     DataBaseInfo baseInfo = (DataBaseInfo) obj;
                     baseInfo.setCode(type);
@@ -83,22 +77,47 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
                     baseInfo.setTime(new Date());
                     out.add(baseInfo);
                 }
+
             } else {
-                if ( System.currentTimeMillis()-time < 3000) {
+                if (type == 0x01F7) {
+                    time = System.currentTimeMillis();
                     TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-                    Object obj = handler.decode(0x0318, Unpooled.copiedBuffer(in));
+                    Object obj = handler.decode(type, Unpooled.copiedBuffer(in));
                     if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
                         DataBaseInfo baseInfo = (DataBaseInfo) obj;
-                        baseInfo.setCode(0x01F7);
+                        baseInfo.setCode(type);
                         baseInfo.setNum(num);
                         baseInfo.setTime(new Date());
                         out.add(baseInfo);
                     }
-                }else {
-                    in.clear();
+                } else {
+                    if (System.currentTimeMillis() - time < 5000) {
+                        in.resetReaderIndex();
+                        String hexDump = ByteBufUtil.hexDump(in);
+                        int i = hexDump.indexOf("20202020202020200d0a0000");
+                        if (i == -1||(i%2!=0)) {//丢弃
+                            in.clear();
+                        } else {
+                            in.readBytes((i/2)+12);
+                            TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+                            Object obj = handler.decode(0x0318, Unpooled.copiedBuffer(in));
+                            if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
+                                DataBaseInfo baseInfo = (DataBaseInfo) obj;
+                                baseInfo.setCode(0x01F7);
+                                baseInfo.setNum(num);
+                                baseInfo.setTime(new Date());
+                                out.add(baseInfo);
+                            }
+                        }
+                    } else {
+                        in.clear();
+                    }
                 }
-            }
 
+            }
+        } catch (Exception e) {
+            logger.error("数据解析出现错误!" + e.toString());
+            in.clear();
         }
     }
 

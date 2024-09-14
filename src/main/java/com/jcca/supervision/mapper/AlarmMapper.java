@@ -10,6 +10,6 @@ import org.apache.ibatis.annotations.Delete;
  * @create: 2023/11/30 15:26
  **/
 public interface AlarmMapper extends BaseMapper<Alarm> {
-    @Delete("delete  from DH_ALARM")
+    @Delete("delete from DH_ALARM")
     void deleteAlarm();
 }

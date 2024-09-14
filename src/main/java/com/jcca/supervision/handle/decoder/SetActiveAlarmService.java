@@ -96,9 +96,6 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
         DataBaseInfo baseInfo = (DataBaseInfo) obj;
         if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
-/*            if (!alarmDataList.isEmpty()){
-                alarmService.deleteAlarm();
-            }*/
             for (Alarm alarm : alarmDataList) {
                 Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
                 if (ObjectUtil.isNull(cacheData)) {

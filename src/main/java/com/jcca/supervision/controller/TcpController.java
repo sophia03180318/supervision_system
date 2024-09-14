@@ -16,6 +16,7 @@ import com.jcca.supervision.service.AlarmService;
 import com.jcca.supervision.service.DeviceService;
 import com.jcca.supervision.service.NodesService;
 import com.jcca.supervision.tcp.NettyTCPClient;
+import com.jcca.util.AppPattenUtils;
 import com.jcca.util.ResultVoUtil;
 import com.jcca.util.SpringUtil;
 import io.netty.channel.Channel;
@@ -62,7 +63,6 @@ public class TcpController {
     @Resource
     private AlarmService alarmService;
 
-
     /**
      * 同步指定节点的下层节点
      */
@@ -102,6 +102,25 @@ public class TcpController {
     /**
      * 同步动环的设备
      */
+    @GetMapping("/pullAllDevice2")
+    @ApiOperation(value = "推送动环所有设备")
+    public ResultVo pullAllDevice2()  {
+
+        List<Device> list = deviceService.list();
+        if (!list.isEmpty()){
+            //调取ITSM接口
+            String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+            return ResultVoUtil.success("共推送"+list.size()+"台设备");
+        }
+
+        return ResultVoUtil.success("无设备可推送");
+    }
+
+
+
+    /**
+     * 同步动环的设备
+     */
     @GetMapping("/pullAllDevice/{nodeId}")
     @ApiOperation(value = "同步并推送动环所有设备")
     public ResultVo pullAllDevice() throws InterruptedException {
@@ -129,20 +148,36 @@ public class TcpController {
     }
 
     /**
-     * 同步动环的设备
+     * 设置实时告警方式
      */
-    @GetMapping("/pullAllDevice2")
-    @ApiOperation(value = "推送动环所有设备")
-    public ResultVo pullAllDevice2()  {
-
-        List<Device> list = deviceService.list();
-        if (!list.isEmpty()){
-            //调取ITSM接口
-            String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-            return ResultVoUtil.success("共推送"+list.size()+"台设备");
+    @GetMapping("/setAlarmMode/{mode}")
+    @ApiOperation(value = "设置实时告警方式")
+    public ResultVo<List<String>> setAlarmMode(@PathVariable String mode) throws InterruptedException {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
         }
+        alarmService.deleteAlarm();
+        channel.writeAndFlush(GetActiveAlarmFrame.newInstance());
+        Thread.sleep(1000);
+        channel.writeAndFlush(SetAlarmModeFrame.newInstance(mode));
+        return ResultVoUtil.success();
+    }
 
-        return ResultVoUtil.success("无设备可推送");
+
+    /**
+     * 实时获取数据属性
+     */
+    @GetMapping("/getProperty")
+    @ApiOperation(value = "获取设备属性")
+    public ResultVo<List<String>> getProperty(String id) {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
+        }
+        channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
+        return ResultVoUtil.success("配置成功");
+
     }
 
 
@@ -191,22 +226,6 @@ public class TcpController {
     /**
      * 实时获取数据属性
      */
-    @GetMapping("/getProperty")
-    @ApiOperation(value = "获取设备属性")
-    public ResultVo<List<String>> getProperty(String id) {
-        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
-        if (!channel.isActive()) {
-            return ResultVoUtil.error("动环程序未启动");
-        }
-        channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
-        return ResultVoUtil.success("配置成功");
-
-    }
-
-
-    /**
-     * 实时获取数据属性
-     */
     @GetMapping("/getAlarm")
     @ApiOperation(value = "获取当前告警")
     public ResultVo<List<String>> getAlarm() throws InterruptedException {
@@ -215,9 +234,7 @@ public class TcpController {
             return ResultVoUtil.error("动环程序未启动");
         }
         channel.writeAndFlush(GetActiveAlarmFrame.newInstance());
-        Thread.sleep(500);
         return ResultVoUtil.success("获取成功");
-
     }
 
 
@@ -232,31 +249,15 @@ public class TcpController {
         if (!channel.isActive()) {
             return ResultVoUtil.error("动环程序未启动");
         }
-
-/*        if (!AppPattenUtils.isNumber(secondsStr) || Integer.getInteger(secondsStr) < 15) {
+        if (!AppPattenUtils.isNumber(secondsStr) || Integer.getInteger(secondsStr) < 15) {
             return ResultVoUtil.error("传入正确的间隔秒数,不可小于15秒");
-        }*/
+        }
         Integer seconds = Integer.parseInt(secondsStr);
 
         channel.writeAndFlush(SetDynAccessModeFrame.newInstance(seconds, ids));
         return ResultVoUtil.success("配置成功");
     }
 
-
-    /**
-     * 设置实时告警方式
-     */
-    @GetMapping("/setAlarmMode/{mode}")
-    @ApiOperation(value = "设置实时告警方式")
-    public ResultVo<List<String>> setAlarmMode(@PathVariable String mode) {
-        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
-        if (!channel.isActive()) {
-            return ResultVoUtil.error("动环程序未启动");
-        }
-        //设置想要获取的告警等级
-        channel.writeAndFlush(SetAlarmModeFrame.newInstance(mode));
-        return ResultVoUtil.success();
-    }
 
 
     /**

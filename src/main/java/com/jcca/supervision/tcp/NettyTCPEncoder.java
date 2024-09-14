@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,15 +60,14 @@ public class NettyTCPEncoder extends MessageToByteEncoder<BaseDataFrame> {
             out.writeInt(Integer.decode(node.getId()));
 
         }else if (dataFrame instanceof SetAlarmModeFrame) {    //设置告警模式
-            out.writeInt(dataFrame.getLen());
-            out.writeInt(dataFrame.getNum());
-            out.writeInt(dataFrame.getType());
             SetAlarmModeFrame alarm = (SetAlarmModeFrame) dataFrame;
-            out.writeInt(Integer.decode(alarm.getGroupId()));
-            out.writeInt(Integer.decode(alarm.getMode()));
-            out.writeInt(Integer.decode(alarm.getCount()));
-            out.writeInt(Integer.decode(alarm.getIds()));
-
+            out.writeInt(24);
+            byte[] bytes = Hex.decodeHex("6A56A796");
+            out.writeBytes(bytes);
+            out.writeInt(dataFrame.getType());
+            out.writeInt(61689);
+            out.writeInt(3);
+            out.writeInt(0);
         } else if (dataFrame instanceof SetDynAccessModeFrame) {  //设置数据模式
             SetDynAccessModeFrame mode = (SetDynAccessModeFrame) dataFrame;
             out.writeInt(dataFrame.getLen());

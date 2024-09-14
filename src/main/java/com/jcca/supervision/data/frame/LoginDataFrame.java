@@ -24,6 +24,8 @@ public class LoginDataFrame extends BaseDataFrame implements Serializable {
     public static int LEN = DataConst.MIN_MSG_LEN + 60;
     public static String USER_NAME = "jcca";
     public static String PASSWORD = "123456";
+/*  public static String USER_NAME = "zhjc";
+    public static String PASSWORD = "123";*/
 
     private LoginDataFrame() {
         this.setLen(LEN);
