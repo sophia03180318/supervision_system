@@ -385,7 +385,10 @@ public class SetPropertyService implements ResponseHandleAdapter {
                 } catch (Exception e) {
                     logger.error(e.toString());
                 }
-                redisService.set(DataConst.DH_PROERTY + "_" + propertyData.getPropertyId(), gson.toJson(propertyData));
+                /*
+                * 因暂时不要
+                * */
+              //  redisService.set(DataConst.DH_PROERTY + "_" + propertyData.getPropertyId(), gson.toJson(propertyData));
                 redisService.set(DataConst.DH_PROERTY_PARENT + "_" + propertyData.getPropertyId(), propertyData.getParentID());
             }
         }

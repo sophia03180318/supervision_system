@@ -16,6 +16,7 @@ import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.nio.charset.Charset;
@@ -102,13 +103,18 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
                     logger.error("未获取到此监测点位的设备ID：" + DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
                     continue;
                 }
-                alarm.setId(MyIdUtil.getIncId());
                 alarm.setCreateTime(baseInfo.getTime());
                 alarm.setDeviceId((String) cacheData);
                 Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
-                alarmService.save(alarmInfo);
+                if (StringUtils.isEmpty(alarmInfo.getAlarmId())) {
+                    String incId = MyIdUtil.getIncId();
+                    alarmInfo.setId(incId);
+                    alarmInfo.setAlarmId(incId);
+                } else {
+                    alarmInfo.setId(alarm.getAlarmId());
+                }
+                alarmService.saveOrUpdate(alarmInfo);
             }
         }
-
     }
 }

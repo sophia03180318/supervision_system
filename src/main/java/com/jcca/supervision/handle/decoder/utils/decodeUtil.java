@@ -40,6 +40,7 @@ public class decodeUtil {
                 try {
                     alarm.setOccurrenceTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(data));
                 } catch (ParseException e) {
+                    alarm.setOccurrenceTime(alarm.getCreateTime());
                 }
                 continue;
             }

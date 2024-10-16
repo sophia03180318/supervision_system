@@ -10,12 +10,14 @@ import com.jcca.supervision.entity.Alarm;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import com.jcca.supervision.handle.decoder.utils.decodeUtil;
 import com.jcca.supervision.service.AlarmService;
+import com.jcca.supervision.service.PropertyService;
 import com.jcca.util.MyIdUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.nio.charset.Charset;
@@ -31,7 +33,8 @@ import java.util.List;
 public class SendAlarmService implements ResponseHandleAdapter {
     @Resource
     private RedisService redisService;
-
+    @Resource
+    private PropertyService propertyService;
     @Resource
     private AlarmService alarmService;
 
@@ -65,7 +68,7 @@ public class SendAlarmService implements ResponseHandleAdapter {
         if (cnt == -2) {
             logger.info(LogUtil.buildLog("无指定ID，获取告警失败", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
         }
-        while (contentBuf.readableBytes() >=168) {
+        while (contentBuf.readableBytes() >= 168) {
             try {
                 long dataId = contentBuf.readUnsignedInt();//数据ID
                 int level = contentBuf.readInt();//状态
@@ -98,19 +101,35 @@ public class SendAlarmService implements ResponseHandleAdapter {
         DataBaseInfo baseInfo = (DataBaseInfo) obj;
         if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
-            logger.info("告警开始处理："+ alarmDataList.size()+"条");
+            logger.info("告警开始处理：" + alarmDataList.size() + "条");
             for (Alarm alarm : alarmDataList) {
-                Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
-                if (ObjectUtil.isNull(cacheData)) {
-                    logger.error("未获取到此监测点位的设备ID：" +  alarm.getPropertyId());
-                     continue;
-                }
-                alarm.setId(MyIdUtil.getIncId());
-                alarm.setDeviceId((String) cacheData);
+                String parentId = getParentId(alarm.getPropertyId());
                 alarm.setCreateTime(baseInfo.getTime());
+                alarm.setDeviceId(parentId);
                 Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
-                alarmService.save(alarmInfo);
+                if (StringUtils.isEmpty(alarmInfo.getAlarmId())) {
+                    String incId = MyIdUtil.getIncId();
+                    alarmInfo.setId(incId);
+                    alarmInfo.setAlarmId(incId);
+                } else {
+                    alarmInfo.setId(alarm.getAlarmId());
+                }
+                alarmService.saveOrUpdate(alarmInfo);
             }
         }
+    }
+
+
+    private String getParentId(String propertyId) {
+        Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + propertyId);
+        if (ObjectUtil.isNotNull(cacheData)) {
+            return (String) cacheData;
+        }
+        long id = Long.parseLong(propertyId);
+        String idStr = Long.toBinaryString(id);
+        String substring = idStr.substring(0, idStr.length() - 11);
+        String parentId = String.valueOf(Long.parseLong(substring + "00000000000", 2));
+        redisService.set(DataConst.DH_PROERTY_PARENT + "_" + propertyId, parentId);
+        return parentId;
     }
 }

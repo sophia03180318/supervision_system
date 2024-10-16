@@ -13,6 +13,7 @@ import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.nio.charset.Charset;
@@ -91,17 +92,34 @@ public class SendAlarmService2 implements ResponseHandleAdapter {
             List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
             logger.info("告警二号开始处理："+ alarmDataList.size()+"条");
             for (Alarm alarm : alarmDataList) {
-                Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + alarm.getPropertyId());
-                if (ObjectUtil.isNull(cacheData)) {
-                    logger.error("未获取到此监测点位的设备ID：" +  alarm.getPropertyId());
-                    continue;
-                }
-                alarm.setId(MyIdUtil.getIncId());
-                alarm.setDeviceId((String) cacheData);
+                String parentId = getParentId(alarm.getPropertyId());
                 alarm.setCreateTime(baseInfo.getTime());
+                alarm.setDeviceId(parentId);
                 Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
-                alarmService.save(alarmInfo);
+                if (StringUtils.isEmpty(alarmInfo.getAlarmId())) {
+                    String incId = MyIdUtil.getIncId();
+                    alarmInfo.setId(incId);
+                    alarmInfo.setAlarmId(incId);
+                } else {
+                    alarmInfo.setId(alarm.getAlarmId());
+                }
+                alarmService.saveOrUpdate(alarmInfo);
             }
         }
     }
+
+
+    private String getParentId(String propertyId) {
+        Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + propertyId);
+        if (ObjectUtil.isNotNull(cacheData)) {
+            return (String) cacheData;
+        }
+        long id = Long.parseLong(propertyId);
+        String idStr = Long.toBinaryString(id);
+        String substring = idStr.substring(0, idStr.length() - 11);
+        String parentId = String.valueOf(Long.parseLong(substring + "00000000000", 2));
+        redisService.set(DataConst.DH_PROERTY_PARENT + "_" + propertyId, parentId);
+        return parentId;
+    }
+
 }
