@@ -157,10 +157,10 @@ public class TcpController {
         if (!channel.isActive()) {
             return ResultVoUtil.error("动环程序未启动");
         }
-        alarmService.deleteAlarm();
+        channel.writeAndFlush(LoginDataFrame.newInstance());
         channel.writeAndFlush(GetActiveAlarmFrame.newInstance());
-        Thread.sleep(1000);
-        channel.writeAndFlush(SetAlarmModeFrame.newInstance(mode));
+        Thread.sleep(5000);
+        channel.writeAndFlush(SetAlarmModeFrame.newInstance("3"));
         return ResultVoUtil.success();
     }
 

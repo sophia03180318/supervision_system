@@ -1,13 +1,9 @@
 package com.jcca.supervision.tcp;
 
-import com.jcca.common.LogUtil;
-import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
 import com.jcca.supervision.handle.TcpResponseHandler;
 import com.jcca.util.SpringUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
@@ -15,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author sophia
@@ -26,98 +21,78 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
 
     private long time = 0;
     private Logger logger = LoggerFactory.getLogger(getClass());
-
+    // 报文头长度: 总长度(8) + 序号(8) + 类型(4) = 20字节
+    private static final int HEADER_LENGTH = 20;
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        String hexDump = ByteBufUtil.hexDump(in);
-        if (hexDump.length() < 24) {
-            logger.warn(LogUtil.buildLog("丢弃过短的消息，长度为 ", hexDump));
-            in.clear();
-        }
-        // 排除心跳打印
-        if (hexDump.substring(20).startsWith(DataConst.MSG_HEART_BEAT)) {
-            logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "收到TCP心跳", "砰"));
-            in.clear();
-        } else {
-            logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "收到TCP原始内容", hexDump));
-            decodeFrame(in, out);
-        }
-    }
-
-    private synchronized void decodeFrame(ByteBuf in, List<Object> out) {
         try {
-            in.markReaderIndex();
-            //readableBytes  读取数据长度
-            int allLen = in.readableBytes();
-
-            //最小消息长度
-            if (allLen < DataConst.MIN_MSG_LEN) {
-                logger.warn(LogUtil.buildLog("丢弃过短的消息，长度为 ", allLen + ""));
-                in.clear();
+            // 检查是否足够解析头部
+            if (in.readableBytes() < HEADER_LENGTH) {
                 return;
             }
 
-            long l = in.readUnsignedInt();// 报文长度
-            long num = in.readUnsignedInt();// 报文序号
-            int type = 0;
-            try {
-                type = Integer.parseInt(String.valueOf(in.readUnsignedInt()));// 报文类型
-            } catch (NumberFormatException e) {
+            // 标记当前读取位置
+            in.markReaderIndex();
 
+            // 读取报文头（大端序）
+            long totalLength = in.readLong();
+            long serialNo = in.readLong();
+            int type = (int) in.readUnsignedInt(); // 4字节报文类型
+
+            // 验证报文长度
+            if (totalLength < HEADER_LENGTH || totalLength > 65535) {
+                logger.warn("非法报文长度: {} (范围应在 {}-{})", totalLength, HEADER_LENGTH, 65535);
+                in.skipBytes(in.readableBytes());
+                return;
             }
-            if (allLen == l) {
-                // 交给适配器处理
-                TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-                Object obj = handler.decode(type, in);
-                //获取解码后的对象
-                if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
-                    DataBaseInfo baseInfo = (DataBaseInfo) obj;
-                    baseInfo.setCode(type);
-                    baseInfo.setNum(num);
-                    baseInfo.setTime(new Date());
-                    out.add(baseInfo);
-                }
 
-            } else {
-                if (type == 0x01F7) {
-                    time = System.currentTimeMillis();
-                    TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-                    Object obj = handler.decode(type, Unpooled.copiedBuffer(in));
-                    if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
-                        DataBaseInfo baseInfo = (DataBaseInfo) obj;
-                        baseInfo.setCode(type);
-                        baseInfo.setNum(num);
-                        baseInfo.setTime(new Date());
-                        out.add(baseInfo);
-                    }
-                } else {
-                    if (System.currentTimeMillis() - time < 5000) {
-                        in.resetReaderIndex();
-                        String hexDump = ByteBufUtil.hexDump(in);
-                        int i = hexDump.indexOf("20202020202020200d0a0000");
-                        if (i == -1||(i%2!=0)) {//丢弃
-                            in.clear();
-                        } else {
-                            in.readBytes((i/2)+12);
-                            TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-                            Object obj = handler.decode(0x0318, Unpooled.copiedBuffer(in));
-                            if (Objects.nonNull(obj) && obj instanceof DataBaseInfo) {
-                                DataBaseInfo baseInfo = (DataBaseInfo) obj;
-                                baseInfo.setCode(0x01F7);
-                                baseInfo.setNum(num);
-                                baseInfo.setTime(new Date());
-                                out.add(baseInfo);
-                            }
-                        }
-                    } else {
-                        in.clear();
-                    }
-                }
+            // 计算内容长度
+            int contentLength = (int)(totalLength - HEADER_LENGTH);
 
+            // 检查内容是否完整
+            if (in.readableBytes() < contentLength) {
+                in.resetReaderIndex();
+                return;
             }
+
+            // 交给适配器处理报文内容
+            TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+            ByteBuf contentBuf = in.readSlice(contentLength);
+            Object obj = handler.decode(type, contentBuf);
+
+            // 处理解码结果
+            processDecodedObject(type, serialNo, obj, out);
+
+            // 循环处理粘包数据
+            while (in.readableBytes() >= HEADER_LENGTH) {
+                totalLength = in.readLong();
+                serialNo = in.readLong();
+                type = (int) in.readUnsignedInt();// 报文类型
+                contentLength = (int)(totalLength - HEADER_LENGTH);
+                if (in.readableBytes() < contentLength) {
+                    in.resetReaderIndex();
+                    break;
+                }
+                contentBuf = in.readSlice(contentLength);
+                obj = handler.decode(type, contentBuf);
+                processDecodedObject(type, serialNo, obj, out);
+            }
+
         } catch (Exception e) {
-            logger.error("数据解析出现错误!" + e.toString());
-            in.clear();
+            logger.error("报文解析异常: {}", e.getMessage(), e);
+            in.resetReaderIndex();
+        }
+    }
+    private void processDecodedObject(int type, long serialNo, Object obj, List<Object> out) {
+        if (obj instanceof DataBaseInfo) {
+            DataBaseInfo baseInfo = (DataBaseInfo) obj;
+            baseInfo.setCode(type);
+            baseInfo.setNum(serialNo);
+            baseInfo.setTime(new Date());
+            out.add(baseInfo);
+        } else if (obj != null) {
+            logger.info("收到非DataBaseInfo类型对象: {}", obj.getClass().getSimpleName());
+            out.add(obj);
         }
     }
 

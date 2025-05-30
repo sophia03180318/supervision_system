@@ -87,24 +87,28 @@ public class SendAlarmService2 implements ResponseHandleAdapter {
      */
     @Override
     public void handle(Object obj) {
-        DataBaseInfo baseInfo = (DataBaseInfo) obj;
-        if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
-            List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
-            logger.info("告警二号开始处理："+ alarmDataList.size()+"条");
-            for (Alarm alarm : alarmDataList) {
-                String parentId = getParentId(alarm.getPropertyId());
-                alarm.setCreateTime(baseInfo.getTime());
-                alarm.setDeviceId(parentId);
-                Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
-                if (StringUtils.isEmpty(alarmInfo.getAlarmId())) {
-                    String incId = MyIdUtil.getIncId();
-                    alarmInfo.setId(incId);
-                    alarmInfo.setAlarmId(incId);
-                } else {
-                    alarmInfo.setId(alarm.getAlarmId());
+        try {
+            DataBaseInfo baseInfo = (DataBaseInfo) obj;
+            if (ObjectUtil.isNotNull(baseInfo.getAlarmDataList()) && !baseInfo.getAlarmDataList().isEmpty()) {
+                List<Alarm> alarmDataList = baseInfo.getAlarmDataList();
+                logger.info("告警二号开始处理：" + alarmDataList.size() + "条");
+                for (Alarm alarm : alarmDataList) {
+                    String parentId = getParentId(alarm.getPropertyId());
+                    alarm.setCreateTime(baseInfo.getTime());
+                    alarm.setDeviceId(parentId);
+                    Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
+                    if (StringUtils.isEmpty(alarmInfo.getAlarmId())) {
+                        String incId = MyIdUtil.getIncId();
+                        alarmInfo.setId(incId);
+                        alarmInfo.setAlarmId(incId);
+                    } else {
+                        alarmInfo.setId(alarm.getAlarmId());
+                    }
+                    alarmService.saveOrUpdate(alarmInfo);
                 }
-                alarmService.saveOrUpdate(alarmInfo);
             }
+        } catch (Exception e) {
+            logger.error("告警处理过程中发生错误");
         }
     }
 

@@ -60,7 +60,7 @@ public class NettyTCPClient {
     public void connect() {
         // 每轮10分钟
         if (count > 46) {
-            count = 0;
+            count = 3;
         }
         count += 2;
 
@@ -82,6 +82,6 @@ public class NettyTCPClient {
     }
 
     public void resetCount() {
-        count = 0;
+        count = 3;
     }
 }
