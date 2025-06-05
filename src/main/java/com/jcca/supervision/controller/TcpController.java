@@ -12,9 +12,10 @@ import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.frame.*;
 import com.jcca.supervision.entity.Device;
 import com.jcca.supervision.entity.Nodes;
-import com.jcca.supervision.service.AlarmService;
+import com.jcca.supervision.entity.Station;
 import com.jcca.supervision.service.DeviceService;
 import com.jcca.supervision.service.NodesService;
+import com.jcca.supervision.service.StationService;
 import com.jcca.supervision.tcp.NettyTCPClient;
 import com.jcca.util.AppPattenUtils;
 import com.jcca.util.ResultVoUtil;
@@ -61,7 +62,38 @@ public class TcpController {
     @Resource
     private DeviceService deviceService;
     @Resource
-    private AlarmService alarmService;
+    private StationService stationService;
+
+
+    /**
+     * 同步指定节点的下层节点
+     */
+    @GetMapping("/getAsset")
+    @ApiOperation(value = "同步设备节点")
+    public ResultVo<List<String>> getAsset() throws InterruptedException {
+        Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+        if (!channel.isActive()) {
+            return ResultVoUtil.error("动环程序未启动");
+        }
+        redisService.set(DataConst.DH_NODE_ID_LEVEL, "3");
+        List<Station> list = stationService.list();
+        for (Station station : list) {
+            String stationId = station.getStationId();
+            redisService.set(DataConst.DH_NODE_ID, stationId);
+            //获取此节点的信息
+            channel.writeAndFlush(GetSubstructFrame.newInstance(stationId));
+        }
+        Thread.sleep(2000);
+        List<String> deviceIds = nodesService.getNodesIdByType("3");
+        for (String id : deviceIds) {
+            channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
+        }
+        Thread.sleep(2000);
+        //调取ITSM接口
+        String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
+        return ResultVoUtil.success("共推送" + list.size() + "台设备");
+    }
+
 
     /**
      * 同步指定节点的下层节点
@@ -98,24 +130,22 @@ public class TcpController {
     }
 
 
-
     /**
      * 同步动环的设备
      */
     @GetMapping("/pullAllDevice2")
     @ApiOperation(value = "推送动环所有设备")
-    public ResultVo pullAllDevice2()  {
+    public ResultVo pullAllDevice2() {
 
         List<Device> list = deviceService.list();
-        if (!list.isEmpty()){
+        if (!list.isEmpty()) {
             //调取ITSM接口
             String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-            return ResultVoUtil.success("共推送"+list.size()+"台设备");
+            return ResultVoUtil.success("共推送" + list.size() + "台设备");
         }
 
         return ResultVoUtil.success("无设备可推送");
     }
-
 
 
     /**
@@ -138,10 +168,10 @@ public class TcpController {
             channel.writeAndFlush(GetPrpertyFrame.newInstance(id));
         }
         List<Device> list = deviceService.list();
-        if (!list.isEmpty()){
+        if (!list.isEmpty()) {
             //调取ITSM接口
             String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-            return ResultVoUtil.success("共推送"+list.size()+"台设备");
+            return ResultVoUtil.success("共推送" + list.size() + "台设备");
         }
 
         return ResultVoUtil.success("无设备可推送");
@@ -222,7 +252,6 @@ public class TcpController {
     }
 
 
-
     /**
      * 实时获取数据属性
      */
@@ -236,7 +265,6 @@ public class TcpController {
         channel.writeAndFlush(GetActiveAlarmFrame.newInstance());
         return ResultVoUtil.success("获取成功");
     }
-
 
 
     /**
@@ -257,7 +285,6 @@ public class TcpController {
         channel.writeAndFlush(SetDynAccessModeFrame.newInstance(seconds, ids));
         return ResultVoUtil.success("配置成功");
     }
-
 
 
     /**

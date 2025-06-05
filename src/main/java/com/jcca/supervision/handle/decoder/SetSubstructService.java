@@ -109,6 +109,6 @@ public class SetSubstructService implements ResponseHandleAdapter {
             nodes.setCreateTime(new Date());
             nodesService.saveOrUpdate(nodes);
         }
-        redisService.set(DataConst.DH_NODE_ID_LIST, nodeList.stream().map(NodesData::getId).collect(Collectors.toList()));
+        redisService.set(DataConst.DH_DEVICE_ID_LIST, nodeList.stream().map(NodesData::getId).collect(Collectors.joining(",")));
     }
 }
