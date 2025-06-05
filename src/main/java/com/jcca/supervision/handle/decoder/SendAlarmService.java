@@ -74,9 +74,9 @@ public class SendAlarmService implements ResponseHandleAdapter {
                 int level = contentBuf.readInt();//状态
                 String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
                 //告警等级不够直接掠过
-                if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
+         /*       if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
                     continue;
-                }
+                }*/
                 Alarm alarmData = new Alarm();
                 alarmData.setPropertyId(String.valueOf(dataId));
                 alarmData.setLevell(level);

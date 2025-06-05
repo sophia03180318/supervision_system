@@ -62,7 +62,7 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
         if (cnt == -1) {
             logger.info(LogUtil.buildLog("当前告警信息过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
         }
-        logger.info("获取到" + cnt + "条告警~");
+
         for (int i = 0; i < cnt; i++) {
             try {
                 long dataId = contentBuf.readUnsignedInt();//数据ID
@@ -78,6 +78,7 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
                 //解析告警详情
                 alarmData.setDescc(desc);
                 alarmDataList.add(alarmData);
+                logger.info("获取到" + cnt + "条告警~");
             } catch (Exception e) {
                 logger.info("获取到" + cnt + "条告警,但解析中发生错误");
             }

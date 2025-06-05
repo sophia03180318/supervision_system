@@ -12,88 +12,158 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author sophia
- * @description 消息解码
- * @date 2023/11/23 9:08
- */
 public class NettyTCPDecoder extends ByteToMessageDecoder {
 
-    private long time = 0;
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    // 报文头长度: 总长度(8) + 序号(8) + 类型(4) = 20字节
-    private static final int HEADER_LENGTH = 20;
+    private static final Logger logger = LoggerFactory.getLogger(NettyTCPDecoder.class);
+    private static final int HEADER_LENGTH = 12; // 长度(4) + 序号(4) + 类型(4)
+    private static final int MAX_FRAME_LENGTH = 10 * 1024 * 1024; // 提升到10MB
+    private static final int HEARTBEAT_TYPE = 0x04B2;
+    private static final int ALARM_TYPE = 0x01F7; // 新增告警类型
+    private static final int ALARM_HEADER_LENGTH = 4; // 告警数量字段长度
+    private static final int SINGLE_ALARM_LENGTH = 168; // 单个告警长度
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         try {
-            // 检查是否足够解析头部
-            if (in.readableBytes() < HEADER_LENGTH) {
-                return;
-            }
-
-            // 标记当前读取位置
-            in.markReaderIndex();
-
-            // 读取报文头（大端序）
-            long totalLength = in.readLong();
-            long serialNo = in.readLong();
-            int type = (int) in.readUnsignedInt(); // 4字节报文类型
-
-            // 验证报文长度
-            if (totalLength < HEADER_LENGTH || totalLength > 65535) {
-                logger.warn("非法报文长度: {} (范围应在 {}-{})", totalLength, HEADER_LENGTH, 65535);
-                in.skipBytes(in.readableBytes());
-                return;
-            }
-
-            // 计算内容长度
-            int contentLength = (int)(totalLength - HEADER_LENGTH);
-
-            // 检查内容是否完整
-            if (in.readableBytes() < contentLength) {
-                in.resetReaderIndex();
-                return;
-            }
-
-            // 交给适配器处理报文内容
-            TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
-            ByteBuf contentBuf = in.readSlice(contentLength);
-            Object obj = handler.decode(type, contentBuf);
-
-            // 处理解码结果
-            processDecodedObject(type, serialNo, obj, out);
-
-            // 循环处理粘包数据
             while (in.readableBytes() >= HEADER_LENGTH) {
-                totalLength = in.readLong();
-                serialNo = in.readLong();
-                type = (int) in.readUnsignedInt();// 报文类型
-                contentLength = (int)(totalLength - HEADER_LENGTH);
+                // 保存头部开始位置
+                in.markReaderIndex();
+
+                // 1. 读取头部字段
+                int totalLength = in.readInt();
+                long serialNo = in.readUnsignedInt();
+                int command = in.readInt();
+                int contentLength = totalLength - HEADER_LENGTH;
+
+                // 2. 验证长度
+                if (totalLength < HEADER_LENGTH || totalLength > MAX_FRAME_LENGTH) {
+                    logger.warn("非法报文长度: {} (范围应为 {}-{})",
+                            totalLength, HEADER_LENGTH, MAX_FRAME_LENGTH);
+                    in.skipBytes(in.readableBytes());
+                    continue;
+                }
+
+                // 3. 检查是否为告警类型
+                if (command == ALARM_TYPE) {
+                    handleAlarmPacket(in, out, totalLength, serialNo, command, contentLength);
+                    continue;
+                }
+
+                // 4. 检查内容完整性（常规报文）
                 if (in.readableBytes() < contentLength) {
                     in.resetReaderIndex();
-                    break;
+                    return;
                 }
-                contentBuf = in.readSlice(contentLength);
-                obj = handler.decode(type, contentBuf);
-                processDecodedObject(type, serialNo, obj, out);
-            }
 
+                // 5. 处理心跳报文
+                if (command == HEARTBEAT_TYPE) {
+                    handleHeartbeat(serialNo, out);
+                    in.skipBytes(contentLength);
+                    continue;
+                }
+
+                // 6. 处理常规业务报文
+                ByteBuf contentBuf = in.readSlice(contentLength);
+                processBusinessPacket(command, serialNo, contentBuf, out);
+            }
         } catch (Exception e) {
             logger.error("报文解析异常: {}", e.getMessage(), e);
             in.resetReaderIndex();
         }
     }
-    private void processDecodedObject(int type, long serialNo, Object obj, List<Object> out) {
+
+    // 处理告警报文
+    private void handleAlarmPacket(ByteBuf in, List<Object> out,
+                                   int totalLength, long serialNo,
+                                   int command, int contentLength) {
+        // 检查是否有足够的数据读取告警数量字段
+        if (in.readableBytes() < ALARM_HEADER_LENGTH) {
+            in.resetReaderIndex();
+            return;
+        }
+
+        // 读取告警数量
+        int alarmCount = in.readInt();
+        int expectedLength = ALARM_HEADER_LENGTH + (alarmCount * SINGLE_ALARM_LENGTH);
+
+        // 验证长度一致性
+        if (contentLength != expectedLength) {
+            logger.warn("告警报文长度不一致");
+        }else{
+            logger.warn("头部长度={}, 计算长度={} (数量={})",
+                    contentLength, expectedLength, alarmCount);
+        }
+
+        // 检查完整告警数据是否就绪
+        int remainingAlarmLength = alarmCount * SINGLE_ALARM_LENGTH;
+        if (in.readableBytes() < remainingAlarmLength) {
+            // 回退到告警数量字段前（头部+告警数量）
+            in.resetReaderIndex();
+            return;
+        }
+
+        // 读取告警内容
+        ByteBuf alarmContent = in.readSlice(remainingAlarmLength);
+
+        // 处理告警数据
+        TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+        Object obj = handler.decode(command, alarmContent);
+        processDecodedObject(command, serialNo, obj, out);
+
+        logger.info("成功处理告警报文 [数量:{} 总长度:{}]", alarmCount, totalLength);
+    }
+
+    // 心跳处理（保持不变）
+    private void handleHeartbeat(long serialNo, List<Object> out) {
+        logger.info("收到TCP心跳 [序号:{}]", serialNo);
+    }
+
+    // 业务报文处理
+    private void processBusinessPacket(int command, long serialNo, ByteBuf contentBuf, List<Object> out) {
+        TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
+        Object obj = handler.decode(command, contentBuf);
+        processDecodedObject(command, serialNo, obj, out);
+    }
+
+    // 对象处理
+    private void processDecodedObject(int command, long serialNo, Object obj, List<Object> out) {
         if (obj instanceof DataBaseInfo) {
             DataBaseInfo baseInfo = (DataBaseInfo) obj;
-            baseInfo.setCode(type);
+            baseInfo.setCode(command);
             baseInfo.setNum(serialNo);
             baseInfo.setTime(new Date());
             out.add(baseInfo);
         } else if (obj != null) {
-            logger.info("收到非DataBaseInfo类型对象: {}", obj.getClass().getSimpleName());
+            logger.info("收到其他类型对象: {}", obj.getClass().getSimpleName());
             out.add(obj);
         }
     }
 
+    /**
+     * 字节数组转十六进制字符串（带空格分隔）
+     * 示例输出：01 A3 FF 00
+     */
+    private static String bytesToHex(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return "[]";
+        }
+
+        StringBuilder sb = new StringBuilder(bytes.length * 3);
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+        return sb.substring(0, sb.length() - 1); // 去除末尾空格
+    }
+
+    /**
+     * 简单字节格式化（空格分隔）
+     * 示例：00 00 00 0C 00 00 04 B1 00 00 00 01
+     */
+    private static String formatBinaryData(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 3);
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b)); // 两位大写十六进制+空格
+        }
+        return sb.toString().trim(); // 去除末尾空格
+    }
 }
