@@ -335,7 +335,6 @@ public class TcpController {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
         if (Objects.nonNull(channel) && channel.isActive()) {
             channel.close();
-
             NettyBooter.SCHEDULED_EXECUTOR_SERVICE.shutdown();
         }
         return ResultVoUtil.success("一号链接断开，断后不会自动重连直到再次手动启动");

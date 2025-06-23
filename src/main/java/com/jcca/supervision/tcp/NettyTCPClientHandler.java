@@ -47,10 +47,8 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
     public void channelActive(ChannelHandlerContext ctx) {
         nettyTCPClient.resetCount();
         logger.info(LogUtil.buildLog(ctx.channel().remoteAddress().toString(), "TCP连接成功", ctx.channel().id().toString()));
-        sendHeartbeat(ctx);
         sendLogin(ctx);
-        sendAlarm(ctx);
-        sendModel(ctx);
+        sendHeartbeat(ctx);
     }
 
     private void sendHeartbeat(ChannelHandlerContext ctx) {
@@ -67,6 +65,8 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
         Channel channel = ctx.channel();
         if (channel.isActive()) {
             ctx.writeAndFlush(LoginDataFrame.newInstance());
+            sendAlarm(ctx);
+            sendModel(ctx);
         }
     }
 

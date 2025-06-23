@@ -7,11 +7,13 @@ import com.jcca.supervision.constant.DataConst;
 import com.jcca.supervision.data.DataBaseInfo;
 import com.jcca.supervision.handle.ResponseHandleAdapter;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 /**
  * @author sophia
@@ -51,14 +53,16 @@ public class LoginAckService implements ResponseHandleAdapter {
         if (rightMode == DataConst.INVALID) {
             logger.error(LogUtil.buildLog("登录失失败，用此户无权限：权限代码为", rightMode));
             return baseInfo;
-
         } else if (rightMode == DataConst.LEVEL1) {
             logger.info(LogUtil.buildLog("登录成功，获取读权限：权限代码为", rightMode));
-
         } else if (rightMode == DataConst.LEVEL2) {
             logger.info(LogUtil.buildLog("登录成功：获取读写权限：权限代码为", rightMode));
         } else {
             logger.error(LogUtil.buildLog("登录失失败! 请校验用户名密码!", rightMode));
+            Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
+            if (Objects.nonNull(channel) && channel.isActive()) {
+                channel.close();
+            }
         }
 /*        // 登陆成功启动客户端
         Executor taskExecutor = (Executor) SpringUtil.getBean("taskExecutor");
