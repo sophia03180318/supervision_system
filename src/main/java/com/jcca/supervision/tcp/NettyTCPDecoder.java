@@ -57,7 +57,7 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
 
                 // 5. 处理心跳报文
                 if (command == HEARTBEAT_TYPE) {
-                    handleHeartbeat(serialNo, out);
+                    logger.info("收到TCP心跳~");
                     in.skipBytes(contentLength);
                     continue;
                 }
@@ -84,15 +84,8 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
 
         // 读取告警数量
         int alarmCount = in.readInt();
-        int expectedLength = ALARM_HEADER_LENGTH + (alarmCount * SINGLE_ALARM_LENGTH);
+        //int expectedLength = ALARM_HEADER_LENGTH + (alarmCount * SINGLE_ALARM_LENGTH);
 
-        // 验证长度一致性
-        if (contentLength != expectedLength) {
-            logger.warn("告警报文长度不一致");
-        }else{
-            logger.warn("头部长度={}, 计算长度={} (数量={})",
-                    contentLength, expectedLength, alarmCount);
-        }
 
         // 检查完整告警数据是否就绪
         int remainingAlarmLength = alarmCount * SINGLE_ALARM_LENGTH;
@@ -109,14 +102,10 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
         TcpResponseHandler handler = SpringUtil.getBean(TcpResponseHandler.class);
         Object obj = handler.decode(command, alarmContent);
         processDecodedObject(command, serialNo, obj, out);
-
         logger.info("成功处理告警报文 [数量:{} 总长度:{}]", alarmCount, totalLength);
     }
 
-    // 心跳处理（保持不变）
-    private void handleHeartbeat(long serialNo, List<Object> out) {
-        logger.info("收到TCP心跳 [序号:{}]", serialNo);
-    }
+
 
     // 业务报文处理
     private void processBusinessPacket(int command, long serialNo, ByteBuf contentBuf, List<Object> out) {
@@ -134,7 +123,7 @@ public class NettyTCPDecoder extends ByteToMessageDecoder {
             baseInfo.setTime(new Date());
             out.add(baseInfo);
         } else if (obj != null) {
-            logger.info("收到其他类型对象: {}", obj.getClass().getSimpleName());
+            //logger.info("收到其他类型对象: {}", obj.getClass().getSimpleName());
             out.add(obj);
         }
     }

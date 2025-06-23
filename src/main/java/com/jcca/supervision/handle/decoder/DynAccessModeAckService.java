@@ -59,6 +59,7 @@ public class DynAccessModeAckService implements ResponseHandleAdapter {
      */
     @Override
     public Object decode(ByteBuf contentBuf) {
+        try{
         DataBaseInfo baseInfo = new DataBaseInfo();
         ArrayList<PropertyValue> propertyValues = new ArrayList<>();
         int groupId = contentBuf.readInt();//数据包序号
@@ -136,7 +137,9 @@ public class DynAccessModeAckService implements ResponseHandleAdapter {
         }
         baseInfo.setPropertyValueList(propertyValues);
         return baseInfo;
-    }
+    } catch (Exception e) {
+            return new DataBaseInfo();
+        }}
 
     /**
      * 解码之后的处理

@@ -69,7 +69,7 @@ public class TcpController {
      * 同步指定节点的下层节点
      */
     @GetMapping("/getAsset")
-    @ApiOperation(value = "同步设备节点")
+    @ApiOperation(value = "同步设备节点1111111111111111111111111")
     public ResultVo<List<String>> getAsset() throws InterruptedException {
         Channel channel = (Channel) DataConst.TEMP_MAP.get(DataConst.NETTY_TCP_CHANNEL);
         if (!channel.isActive()) {
@@ -91,7 +91,7 @@ public class TcpController {
         Thread.sleep(2000);
         //调取ITSM接口
         String body = HttpRequest.post(pushUrl + "/api/free/syslog/pullAllDevice").setReadTimeout(5000).setConnectionTimeout(5000).execute().body();
-        return ResultVoUtil.success("共推送" + list.size() + "台设备");
+        return ResultVoUtil.success("共推送" + deviceIds.size() + "台设备");
     }
 
 
