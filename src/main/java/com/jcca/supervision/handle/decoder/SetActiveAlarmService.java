@@ -114,7 +114,9 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
                 } else {
                     alarmInfo.setId(alarm.getAlarmId());
                 }
-                alarmService.saveOrUpdate(alarmInfo);
+                if (alarmService.getById(alarm.getAlarmId()) == null) {
+                    alarmService.save(alarmInfo);
+                }
             }
         }
     }
