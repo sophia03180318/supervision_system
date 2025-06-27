@@ -12,7 +12,6 @@ import com.jcca.supervision.handle.decoder.utils.decodeUtil;
 import com.jcca.supervision.service.AlarmService;
 import com.jcca.util.MyIdUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -58,11 +57,16 @@ public class SetActiveAlarmService implements ResponseHandleAdapter {
     public Object decode(ByteBuf contentBuf) {
         DataBaseInfo baseInfo = new DataBaseInfo();
         ArrayList<Alarm> alarmDataList = new ArrayList<Alarm>();
+        int result = contentBuf.readInt();
+        if (result == 0) {
+            logger.info(LogUtil.buildLog("系统返回:请求当前告警失败，返回值为0,", ""));
+          return alarmDataList;
+        }
         int cnt = contentBuf.readInt();// 告警数量
         if (cnt == -1) {
-            logger.info(LogUtil.buildLog("当前告警信息过多，不可一次获取", JSON.toJSONString(ByteBufUtil.hexDump(contentBuf))));
+            logger.info(LogUtil.buildLog("当前告警信息过多，不可一次获取", ""));
         }
-
+        logger.info(LogUtil.buildLog("系统返回:请求当前告警成功，"+cnt+"推送条告警",""));
         for (int i = 0; i < cnt; i++) {
             try {
                 long dataId = contentBuf.readUnsignedInt();//数据ID

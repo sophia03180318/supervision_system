@@ -54,7 +54,7 @@ public class SetAlarmModeService implements ResponseHandleAdapter {
         if (result==0){
             logger.info(LogUtil.buildLog("告警模式设置失败：",null));
         }else{
-            logger.info(LogUtil.buildLog("告警模式设置成功：",null));
+            logger.info(LogUtil.buildLog("告警模式设置成功：",result));
         }
         return baseInfo;
     }

@@ -59,6 +59,7 @@ public class SendAlarmService implements ResponseHandleAdapter {
      */
     @Override
     public Object decode(ByteBuf contentBuf) {
+        int i = contentBuf.readableBytes();
         DataBaseInfo baseInfo = new DataBaseInfo();
         ArrayList<Alarm> alarmDataList = new ArrayList<Alarm>();
         int cnt = contentBuf.readInt();// 告警数量
@@ -73,14 +74,9 @@ public class SendAlarmService implements ResponseHandleAdapter {
                 long dataId = contentBuf.readUnsignedInt();//数据ID
                 int level = contentBuf.readInt();//状态
                 String desc = contentBuf.readCharSequence(160, Charset.forName("GBK")).toString().trim(); //告警描述
-                //告警等级不够直接掠过
-         /*       if (level == DataConst.OPEVENT || level == DataConst.NOALARM || level == DataConst.INVALID2) {
-                    continue;
-                }*/
                 Alarm alarmData = new Alarm();
                 alarmData.setPropertyId(String.valueOf(dataId));
                 alarmData.setLevell(level);
-                //解析告警详情
                 alarmData.setDescc(desc);
                 alarmDataList.add(alarmData);
             } catch (Exception e) {
@@ -119,12 +115,13 @@ public class SendAlarmService implements ResponseHandleAdapter {
                 }
             }
         } catch (Exception e) {
-            logger.error("告警处理过程中发生错误");
+            logger.error(e.toString());
         }
     }
 
 
     private String getParentId(String propertyId) {
+        try{
         Object cacheData = redisService.get(DataConst.DH_PROERTY_PARENT + "_" + propertyId);
         if (ObjectUtil.isNotNull(cacheData)) {
             return (String) cacheData;
@@ -134,6 +131,6 @@ public class SendAlarmService implements ResponseHandleAdapter {
         String substring = idStr.substring(0, idStr.length() - 11);
         String parentId = String.valueOf(Long.parseLong(substring + "00000000000", 2));
         redisService.set(DataConst.DH_PROERTY_PARENT + "_" + propertyId, parentId);
-        return parentId;
+        return parentId;}catch (Exception e){return "";}
     }
 }
