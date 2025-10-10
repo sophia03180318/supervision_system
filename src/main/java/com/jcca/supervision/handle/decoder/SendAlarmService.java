@@ -111,7 +111,10 @@ public class SendAlarmService implements ResponseHandleAdapter {
                     } else {
                         alarmInfo.setId(alarm.getAlarmId());
                     }
-                    alarmService.saveOrUpdate(alarmInfo);
+                    if (ObjectUtil.isNull(alarmService.getById(alarmInfo.getId()))){
+                        alarmService.save(alarmInfo);
+                    }
+
                 }
             }
         } catch (Exception e) {
