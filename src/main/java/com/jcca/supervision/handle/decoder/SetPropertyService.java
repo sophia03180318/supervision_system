@@ -318,6 +318,7 @@ public class SetPropertyService implements ResponseHandleAdapter {
                             Station station = new Station();
                             BeanUtils.copyProperties(propertyData, station);
                             station.setId(propertyData.getPropertyId());
+                            station.setName(parseDataId(propertyData.getPropertyId())+" "+propertyData.getName());
                             station.setStationId(propertyData.getPropertyId());
                             station.setCreateTime(baseInfo.getTime());
                             stationService.saveOrUpdate(station);
@@ -392,5 +393,19 @@ public class SetPropertyService implements ResponseHandleAdapter {
                 redisService.set(DataConst.DH_PROERTY_PARENT + "_" + propertyData.getPropertyId(), propertyData.getParentID());
             }
         }
+    }
+
+    /**
+     * 将 32 位数据ID 拆解为 AA.BBB.CC.DDD 格式的字符串
+     * @return 形如 "1.83.0.0" 的字符串
+     */
+    private static String parseDataId(String idStr) {
+        long id = Long.parseLong(idStr);
+        long AA  = (id >> 27) & 0x1F;   // 高 5 位：CSC 内 LSC 编号
+        long BBB = (id >> 17) & 0x3FF;  // 中间 10 位：LSC 内站点编号
+        long CC  = (id >> 11) & 0x3F;   // 中间 6 位：站内监控对象编号
+        long DDD = id & 0x7FF;          // 低 11 位：监控对象下属数据点编号
+
+        return String.format("%d.%d.%d.%d", AA, BBB, CC, DDD);
     }
 }

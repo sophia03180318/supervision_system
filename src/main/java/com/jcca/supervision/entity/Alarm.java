@@ -62,7 +62,7 @@ public class Alarm {
     private  String alarmNumber;
 
     //告警标志
-    @TableField(exist = false)
+    @TableField("ALARM_FLAG")
     private String alarmFlag;
 
     //告警文本
