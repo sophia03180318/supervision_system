@@ -22,4 +22,9 @@ public class AlarmServiceImpl extends ServiceImpl<AlarmMapper, Alarm> implements
     public void deleteAlarm() {
         alarmMapper.deleteAlarm();
     }
+
+    @Override
+    public void recoverAlarm() {
+        alarmMapper.recoverAlarm();
+    }
 }

@@ -63,11 +63,11 @@ public class JdbcPool {
                 Integer time = RandomUtil.randomInt(1, 1000);
                 Thread.sleep(3000 + time);
             } catch (Exception e) {
-                log.error("第{}次创建mysql连接失败", i + 1, e);
+                log.error("第{}次创建连接失败", i + 1, e);
             }
         }
         if (null == con) {
-            throw new RuntimeException("创建mysql连接失败");
+            throw new RuntimeException("创建连接失败");
         }
 
         return con;

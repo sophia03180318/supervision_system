@@ -13,4 +13,8 @@ public interface AlarmService extends IService<Alarm> {
      * 清空告警
      * */
     void deleteAlarm();
+
+    void recoverAlarm();
+
+
 }

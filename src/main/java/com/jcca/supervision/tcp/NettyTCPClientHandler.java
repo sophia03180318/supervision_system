@@ -12,6 +12,7 @@ import com.jcca.supervision.data.frame.HeartbeatFrame;
 import com.jcca.supervision.data.frame.LoginDataFrame;
 import com.jcca.supervision.data.frame.SetAlarmModeFrame;
 import com.jcca.supervision.handle.TcpResponseHandler;
+import com.jcca.supervision.service.AlarmService;
 import com.jcca.util.SpringUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -51,6 +52,11 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
         sendHeartbeat(ctx);
     }
 
+    private void recoverAlarm() {
+        AlarmService alarmService = SpringUtil.getBean(AlarmService.class);
+        alarmService.recoverAlarm();   // 调用 service 中的方法
+    }
+
     private void sendHeartbeat(ChannelHandlerContext ctx) {
         Channel channel = ctx.channel();
         AsyncConfig.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(() -> {
@@ -62,6 +68,8 @@ public class NettyTCPClientHandler extends SimpleChannelInboundHandler<DataBaseI
     }
 
     private void sendLogin(ChannelHandlerContext ctx) {
+        //重启后恢复所有动环告警重新上
+        recoverAlarm();
         Channel channel = ctx.channel();
         if (channel.isActive()) {
             ctx.writeAndFlush(LoginDataFrame.newInstance());

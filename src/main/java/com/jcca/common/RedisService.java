@@ -124,6 +124,17 @@ public class RedisService {
         return result;
     }
 
+
+    /**
+     * 发送队列消息
+     *
+     * @param channel 队列名称
+     * @param message 消息内容
+     */
+    public void convertAndSend(String channel, String message) {
+        RedisQueueTemplate redisQueueTemplate = new RedisQueueTemplate(stringRedisTemplate);
+        redisQueueTemplate.rPush(channel, message);
+    }
     /**
      * 哈希 添加
      *

@@ -26,6 +26,7 @@ public class decodeUtil {
     public static Alarm getAlarmInfo(Alarm alarm) {
         String desc = alarm.getDescc();
         String[] split = desc.split("\\t");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         for (int i = 0; i < split.length; i++) {
             String data = split[i].trim();
             if (i == 0) {
@@ -38,7 +39,7 @@ public class decodeUtil {
             }
             if (i == 2) {
                 try {
-                    alarm.setOccurrenceTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(data));
+                    alarm.setOccurrenceTime(sdf.parse(data));
                 } catch (ParseException e) {
                     alarm.setOccurrenceTime(alarm.getCreateTime());
                 }
@@ -61,9 +62,7 @@ public class decodeUtil {
                 continue;
             }
             if (i == 7) {
-                String[] split1 = data.split("]");
-                alarm.setAlarmInfo(split1[0].trim());
-                continue;
+                alarm.setAlarmInfo(data.replace("]", "").trim());
             }
         }
         return alarm;
