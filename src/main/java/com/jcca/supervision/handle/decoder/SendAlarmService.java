@@ -120,7 +120,7 @@ public class SendAlarmService implements ResponseHandleAdapter {
                     alarm.setCreateTime(baseInfo.getTime());
                     alarm.setDeviceId(parentId);
                     Alarm alarmInfo = decodeUtil.getAlarmInfo(alarm);
-                    if(alarmInfo.getOccurrenceTime().before(startOfTodayDate)){//今天以前的数据不要
+                    if(alarmInfo.getOccurrenceTime().after(startOfTodayDate)){//今天以前的数据不要
                         String incId = MyIdUtil.getIncId();
                         alarmInfo.setId(incId);
                         saveList.add(alarmInfo);
